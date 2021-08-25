@@ -1,6 +1,10 @@
-# landisgyr-e230-reporter
+# Objective
 Aims to periodically reads over IR the register of a Landis+Gyr E230 Power Meter and displays some statistics in a console app
 
+## Side objectives
+
+- Realize a clean and proper C# console application.
+- Submit the read data to a <http://www.volkszaehler.org/> instance hosted on Synology using Docker.
 
 # Material used
 
@@ -15,7 +19,7 @@ Aims to periodically reads over IR the register of a Landis+Gyr E230 Power Meter
 2. Reads the output into a ```C#``` application
  _manually the output can be read while having run this command before chating with the unit._
  ```cat /dev/ttyUSB0```
-
+3. At first the application will only show the latest values. The statistics will be added later on.
 
 # Sample Output
 

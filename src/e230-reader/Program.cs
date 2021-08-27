@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO.Ports;
 
 namespace e230_reader
 {
@@ -6,7 +7,14 @@ namespace e230_reader
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("List SerialPorts");
+            foreach (var spn in SerialPort.GetPortNames())
+            {
+                Console.WriteLine("\t" + spn);
+            }
+            Console.WriteLine("Trying to create SerialPort");
+            SerialPort sp = new SerialPort();
+
         }
     }
 }

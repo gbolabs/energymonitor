@@ -27,7 +27,7 @@ This output has been read using the `cat`-command.
 
 ```
 /LGZ4ZMR120AC.K750
-/LGZ4ZMR120AC.K750
+/LGZ4ZMR120AC.K750
 F.F.0(00000000)
 0.0.2(  175225)
 0.0.0(13267131)

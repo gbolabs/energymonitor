@@ -52,6 +52,12 @@ p
 Corresponding OBIS-Code: <https://www.promotic.eu/en/pmdoc/Subsystems/Comm/PmDrivers/IEC62056_OBIS.htm>
 
 
+# Python Implementation
+
+To ease the string-processing and posting results to http-based API I transform the bash-base sample into a python application.
+
+[Programatic read using Python](doc/programmatic-read.md)
+
 # Sources / References
 
 Without those sources and references I would not have been able to achieve this result.

@@ -5,6 +5,6 @@
     <RootNamespace>e230_reader</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="3.*"/>
+    <PackageReference Include="System.IO.Ports" Version="5.0.1" />
   </ItemGroup>
 </Project>

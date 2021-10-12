@@ -51,9 +51,13 @@ sleep 1s
 echo -n -e '\x06\x30\x30\x30\x0D\x0A' > /dev/ttyUSB0 # <ACK>000<CR><LF>
 ```
 
-Parameters: 
-- `-n`:
-- `-e`: 
+##### Parameters
+
+_Source: <https://www.man7.org/linux/man-pages/man1/echo.1.html>_
+
+- `-n`: Do not output a trailing new-line
+- `-e`: Enables interpretation of `\`-characters as escape<br/>
+ implies content as `\x2F` will be writen as an hexadecimal value.
 
 In python:
 
@@ -65,7 +69,11 @@ if ser.isOpen():
                  #and discard all that is in buffer
 
         #write data
-        ser.write("\x2F\x3F\x21\x0D\x0A")
+        command = b"\x2F\x3F\x21\x0D\x0A" # /?!<CRL><LF>
+        ser.write(command)
+        time.sleep(1)
+        command = b"\x06\x30\x30\x30\x0D\x0A" # <ACK>000<CR><LF>
+        ser.write(command)
 ```
 
 

@@ -18,11 +18,26 @@ if (not ser.isOpen()):
 
 if (ser.isOpen()):
     print("Serial port open, writing...")
-    # ser.write("\x06\x30\x30\x30\x0D\x0A")
+    command = b"\x2F\x3F\x21\x0D\x0A" # /?!<CRL><LF>
+    print("/?!<CRL><LF> : "+command)
+    ser.write(command)
     time.sleep(1)
+    command = b"\x06\x30\x30\x30\x0D\x0A" # <ACK>000<CR><LF>
+    print("<ACK>000<CR><LF> : "+command)
+    ser.write(command)
+
+    print("Wait to 500ms in order to let the portal completes the write")
+
+    print(time.time)
+
+    time.sleep(1)
+    
+    print(time.time)
 
     print("Read 350 block from serial")
     data = ser.read(350)
+    
+    print(time.time)
     print(data)
 
     ser.close()

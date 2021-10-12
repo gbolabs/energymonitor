@@ -24,7 +24,7 @@ Source: _<https://riptutorial.com/python/example/20311/read-from-serial-port>_
 
 We need:
 - 300bauds
-- 7N1, `7` Data bit, `N` no parity, `1` stop bit
+- 7E1, `7` Data bit, `E` even parity, `1` stop bit
 
 ```python
 import serial

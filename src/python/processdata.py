@@ -8,13 +8,11 @@ def parse_powermeter_data(rsPayload):
     idxIL1 = rsPayload.index("31.7.0")
     idxIL2 = rsPayload.index("51.7.0")
     idxIL3 = rsPayload.index("71.7.0")
-
-    # 1.8.1(025139.058*kWh)
-    energyValueLength=21
-
-    # 31.7.0(000.71)
-    currentValueLength=14
     
+
+    # Missing extracting the value from the whole read text
+    # TODO: Here
+
 
 # Expects an array with the read values in sequence order;
 # [0] -> accumulated consumed energy high-tarif [KWh]

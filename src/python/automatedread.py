@@ -1,5 +1,6 @@
 import time
 import serial
+import processdata
 
 READ_BYTES = 375
 READ_TIMEOUT_SEC = 15
@@ -40,7 +41,9 @@ if (ser.isOpen()):
     delta=time.time()-start
     print("Reading "+str(data.__len__())+" took "+str(delta))
 
-    print(data)
-
     ser.close()
     print("Serial port closed")
+
+print(data)
+
+processdata(data)

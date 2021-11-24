@@ -1,6 +1,7 @@
 import time
 import serial
 import processdata
+import azureclient
 
 READ_BYTES = 375
 READ_TIMEOUT_SEC = 15
@@ -46,4 +47,6 @@ if (ser.isOpen()):
 
 print(data)
 
-processdata.parse_powermeter_data(data)
+paresdData = processdata.parse_powermeter_data(data)
+
+pushDataToAzure(paresdData)

@@ -64,6 +64,7 @@ def store_powermeter_data(readData):
     except:
         print('Unable to write_data history. will not be able to compute delta consumption.')
 
+    return data
 
 # 1.8.1(025139.058*kWh)
 def extractEnergy(consumedEnergy):

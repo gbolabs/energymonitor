@@ -46,4 +46,4 @@ if (ser.isOpen()):
 
 print(data)
 
-processdata(data)
+processdata.parse_powermeter_data(data)

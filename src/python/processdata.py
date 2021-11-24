@@ -8,10 +8,24 @@ def parse_powermeter_data(rsPayload):
     idxIL1 = rsPayload.index("31.7.0")
     idxIL2 = rsPayload.index("51.7.0")
     idxIL3 = rsPayload.index("71.7.0")
+
+
+    # 1.8.1(025139.058*kWh)
+    energyValueLength=21
+
+    # 31.7.0(000.71)
+    currentValueLength=14
+    print(idx182)
+    print(idx182+energyValueLength)
+    parsedData =[]
+    parsedData.append(rsPayload[idx181:(idx181+energyValueLength)])
+    parsedData.append(rsPayload[idx182:(idx182+energyValueLength)])
+    parsedData.append(rsPayload[idxIL1:(idxIL1+currentValueLength)])
+    parsedData.append(rsPayload[idxIL2:(idxIL2+currentValueLength)])
+    parsedData.append(rsPayload[idxIL3:(idxIL3+currentValueLength)])
     
 
-    # Missing extracting the value from the whole read text
-    # TODO: Here
+    store_powermeter_data(parsedData)
 
 
 # Expects an array with the read values in sequence order;
@@ -30,11 +44,11 @@ def store_powermeter_data(readData):
         data = json.loads(data_json)
     except:
         print('Unable to read_data history assumes none existed.')
-        defaults = '{"sampling":"'+str(datetime.now())+'", "consumedHighTarif":0,"consumedLowTarif":0,"liveCurrentL1":0,"liveCurrentL2":0,"liveCurrentL3":0}'
+        defaults = '{"sampling":"'+str(datetime.datetime.now())+'", "consumedHighTarif":0,"consumedLowTarif":0,"liveCurrentL1":0,"liveCurrentL2":0,"liveCurrentL3":0}'
         data = json.loads(defaults)
 
     # Stored consumed energy
-    data['sampling']= str(datetime.now())
+    data['sampling']= str(datetime.datetime.now())
     data['consumedHighTarif'] = extractEnergy(readData[0])
     data['consumedLowTarif'] = extractEnergy(readData[1])
 
@@ -53,9 +67,9 @@ def store_powermeter_data(readData):
 
 # 1.8.1(025139.058*kWh)
 def extractEnergy(consumedEnergy):
-    return consumedEnergy[7,16]
+    return consumedEnergy[7:16]
 
 
 # 31.7.0(000.71)
 def extractLiveCurrent(liveCurrent):
-    return liveCurrent[7,12]
+    return liveCurrent[7:12]

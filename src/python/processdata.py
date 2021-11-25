@@ -15,8 +15,7 @@ def parse_powermeter_data(rsPayload):
 
     # 31.7.0(000.71)
     currentValueLength=14
-    print(idx182)
-    print(idx182+energyValueLength)
+    
     parsedData =[]
     parsedData.append(rsPayload[idx181:(idx181+energyValueLength)])
     parsedData.append(rsPayload[idx182:(idx182+energyValueLength)])

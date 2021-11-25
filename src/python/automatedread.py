@@ -45,8 +45,6 @@ if (ser.isOpen()):
     ser.close()
     print("Serial port closed")
 
-print(data)
-
 paresdData = processdata.parse_powermeter_data(data)
 
-pushDataToAzure(paresdData)
+azureclient.post_to_azure_read_info(paresdData)

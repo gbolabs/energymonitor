@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "APPINSIGHTS_INSTRUMENTATIONKEY": "d791246e-4410-4f20-b7af-9cd6a9080fcb",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=d791246e-4410-4f20-b7af-9cd6a9080fcb;IngestionEndpoint=https://switzerlandnorth-0.in.applicationinsights.azure.com/",
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=storpriv114em001;AccountKey=46gIs5M8qvyGUwUYRYA8zy6eg6rfhX/hhdZK2BV88idrzReP2KdzsAuS4KSAmdKMxnFzqoo+FZfPOhsKCNf6Uw==;EndpointSuffix=core.windows.net",
+    "WEBSITE_RUN_FROM_PACKAGE": "https://storpriv114em001.blob.core.windows.net/function-releases/20211126210114-50cd27c34f65a614b7acde60cf6672a6.zip?sv=2020-06-12&st=2021-11-26T20%3A56%3A16Z&se=2031-11-26T21%3A01%3A16Z&sr=b&sp=r&sig=xl3ZnEDxZWdYlt2%2BM%2FI7stSM2VB6ecfm8nlFFwVybuU%3D",
+    "CosmosDBConnectionString": "AccountEndpoint=https://cosmosprivpr114em001.documents.azure.com:443/;AccountKey=hif5s4ZBxNTHZJK1OHhmgBqqW50Yfl9kubuO5ziy7jeh27pClbmOLdv4hQ4MWX843DrF92J8BG2jxPV65t9cSg==;"
+  }
+}

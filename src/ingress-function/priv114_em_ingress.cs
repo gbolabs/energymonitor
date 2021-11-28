@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -7,6 +5,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.IO;
+using System;
 
 namespace ingress_function
 {
@@ -14,22 +14,55 @@ namespace ingress_function
     {
         [FunctionName("priv114_em_ingress")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [CosmosDB(databaseName: "powerMeter_Measures", collectionName: "RawMeasures", ConnectionStringSetting = "CosmosDBConnectionString")] IAsyncCollector<PowerMeasure> output,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            if (req is null)
+            {
+                throw new ArgumentNullException(nameof(req));
+            }
 
-            string name = req.Query["name"];
+            if (output is null)
+            {
+                throw new ArgumentNullException(nameof(output));
+            }
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            if (log is null)
+            {
+                throw new ArgumentNullException(nameof(log));
+            }
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            try
+            {
+                var payload = await new StreamReader(req.Body).ReadToEndAsync();
+                if (string.IsNullOrWhiteSpace(payload))
+                {
+                    log.LogError($"No body has been submitted.");
+                    return new BadRequestResult();
+                }
+                else
+                {
+                    log.LogDebug(payload);
+                }
 
-            return new OkObjectResult(responseMessage);
+                var data = JsonConvert.DeserializeObject<CosmosDbPowerMeasure>(payload);
+
+                if (data == null)
+                {
+                    log.LogError(60, $"Unable to decode request body to {nameof(PowerMeasure)}");
+                    log.LogDebug(160, message: $"Request body: {payload}");
+                    return new BadRequestResult();
+                }
+
+                await output.AddAsync(data);
+                return new OkObjectResult(data);
+            }
+            catch (Exception exc)
+            {
+                log.LogCritical(90, exc, exc.ToString());
+                return new StatusCodeResult(500);
+            }
         }
     }
 }

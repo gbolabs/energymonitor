@@ -24,7 +24,7 @@ def parse_powermeter_data(rsPayload):
     parsedData.append(rsPayload[idxIL3:(idxIL3+currentValueLength)])
     
 
-    store_powermeter_data(parsedData)
+    return store_powermeter_data(parsedData)
 
 
 # Expects an array with the read values in sequence order;
@@ -63,7 +63,7 @@ def store_powermeter_data(readData):
     except:
         print('Unable to write_data history. will not be able to compute delta consumption.')
 
-    return data
+    return jsonString
 
 # 1.8.1(025139.058*kWh)
 def extractEnergy(consumedEnergy):

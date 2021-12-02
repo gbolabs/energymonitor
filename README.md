@@ -27,7 +27,7 @@ This output has been read using the `cat`-command.
 
 ```
 /LGZ4ZMR120AC.K750
-/LGZ4ZMR120AC.K750
+/LGZ4ZMR120AC.K750
 F.F.0(00000000)
 0.0.2(  175225)
 0.0.0(13267131)
@@ -51,6 +51,12 @@ p
 
 Corresponding OBIS-Code: <https://www.promotic.eu/en/pmdoc/Subsystems/Comm/PmDrivers/IEC62056_OBIS.htm>
 
+
+# Python Implementation
+
+To ease the string-processing and posting results to http-based API I transform the bash-base sample into a python application.
+
+[Programatic read using Python](doc/programmatic-read.md)
 
 # Sources / References
 

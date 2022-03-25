@@ -26,7 +26,7 @@ def parse_powermeter_data(rsPayload):
     parsedData.append(rsPayload[idxIL3:(idxIL3+currentValueLength)])
     
 
-    return store_powermeter_data(parsedData)
+    return transformAndStore(parsedData)
 
 
 # Expects an array with the read values in sequence order;
@@ -35,17 +35,17 @@ def parse_powermeter_data(rsPayload):
 # [2] -> currently delivered current L1 [A]
 # [3] -> currently delivered current L2 [A]
 # [4] -> currently delivered current L3 [A]
-def store_powermeter_data(readData):
+def transformAndStore(readData):
     try:
         # read file
-        with open('/home/pi/read-data.json', 'r') as last_read:
+        with open('/home/pi/read_data.json', 'r') as last_read:
             data_json=last_read.read()
 
         # parse file
         data = json.loads(data_json)
     except:
         print('Unable to read_data history assumes none existed.')
-        defaults = '{"sampling":"'+str(datetime.datetime.now())+'", "consumedHighTarif":0,"consumedLowTarif":0,"liveCurrentL1":0,"liveCurrentL2":0,"liveCurrentL3":0}'
+        defaults = '{"sampling":"'+str(datetime.datetime.now())+'", "consumedHighTarif":0,"injectedEnergyTotal":0,"consumedLowTarif":0,"liveCurrentL1":0,"liveCurrentL2":0,"liveCurrentL3":0}'
         data = json.loads(defaults)
 
     # Stored consumed energy
@@ -60,7 +60,7 @@ def store_powermeter_data(readData):
 
     try:
         jsonString = json.dumps(data)
-        jsonFile = open("data.json", "w")
+        jsonFile = open("/home/pi/read_data.json", "w")
         jsonFile.write(jsonString)
         jsonFile.close()
     except:

@@ -1,4 +1,4 @@
 def writeTofile(data):
-    rawFile = open("raw.json", "w")
+    rawFile = open("/home/pi/raw.data", "w")
     rawFile.write(data)
     rawFile.close()

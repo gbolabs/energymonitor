@@ -52,11 +52,11 @@ def transformAndStore(readData):
     data['sampling']= str(datetime.datetime.now())
     data['consumedHighTarif'] = extractEnergy(readData[0])
     data['consumedLowTarif'] = extractEnergy(readData[1])
-    data['injectedEnergyTotal'] = extractEnergy(readData[1])
+    data['injectedEnergyTotal'] = extractEnergy(readData[2])
 
-    data['liveCurrentL1'] = extractLiveCurrent(readData[2])
-    data['liveCurrentL2'] = extractLiveCurrent(readData[3])
-    data['liveCurrentL3'] = extractLiveCurrent(readData[4])
+    data['liveCurrentL1'] = extractLiveCurrent(readData[3])
+    data['liveCurrentL2'] = extractLiveCurrent(readData[4])
+    data['liveCurrentL3'] = extractLiveCurrent(readData[5])
 
     try:
         jsonString = json.dumps(data)

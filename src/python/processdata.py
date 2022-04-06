@@ -5,6 +5,7 @@ def parse_powermeter_data(rsPayload):
     # Find index of 1.8.1
     idx181 = rsPayload.index("1.8.1")
     idx182 = rsPayload.index("1.8.2")
+    idx281 = rsPayload.index("2.8.1")
     idx280 = rsPayload.index("2.8.0")
     idxIL1 = rsPayload.index("31.7.0")
     idxIL2 = rsPayload.index("51.7.0")
@@ -32,9 +33,10 @@ def parse_powermeter_data(rsPayload):
 # Expects an array with the read values in sequence order;
 # [0] -> accumulated consumed energy high-tarif [KWh]
 # [1] -> accumulated consumed energy low-tarif [kWh]
-# [2] -> currently delivered current L1 [A]
-# [3] -> currently delivered current L2 [A]
-# [4] -> currently delivered current L3 [A]
+# [1] -> accumulated produced energy both-tarif [kWh]
+# [3] -> current current L1 [A]
+# [4] -> current current L2 [A]
+# [5] -> current current L3 [A]
 def transformAndStore(readData):
     try:
         # read file

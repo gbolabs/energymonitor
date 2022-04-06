@@ -1,8 +1,8 @@
 import time
 import serial
-import processdata
-import azureclient
-from python.processdata import store_powermeter_data
+from processdata import parse_powermeter_data
+from azureclient import post_to_azure_read_info
+from storerawdata import writeTofile
 
 READ_BYTES = 375
 READ_TIMEOUT_SEC = 15
@@ -47,8 +47,8 @@ if (ser.isOpen()):
     print("Serial port closed")
 
 # Stores raw data for troubleshooting
-store_powermeter_data.writeTofile(data)
+writeTofile(data)
 
-paresdData = processdata.parse_powermeter_data(data)
+paresdData = parse_powermeter_data(data)
 
-azureclient.post_to_azure_read_info(paresdData)
+post_to_azure_read_info(paresdData)

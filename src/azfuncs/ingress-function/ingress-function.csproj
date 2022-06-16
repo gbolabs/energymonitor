@@ -5,8 +5,8 @@
     <RootNamespace>ingress_function</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.0.1"/>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.CosmosDb" Version="3.0.10"/>
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.0.1" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.CosmosDb" Version="3.0.10" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
@@ -16,5 +16,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\common\common.csproj" />
   </ItemGroup>
 </Project>

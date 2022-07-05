@@ -1,45 +1,57 @@
+using ingress_function;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"], builder.Configuration["CosmosDbName"]);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int minutes) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateTime.Now.AddDays(index),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
+    if (minutes == 0)
+        minutes = 30;
 
-app.MapGet("/api/v1/measures", () =>
-{
-    return new RawMeasures
-    (
-        Guid.NewGuid(),
-        DateTime.Now,
-        10,
-        20,
-        1,
-        2.3m,
-        2.1m,
-        -10
-    );
+    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutes).ToArray();
+    var lastRecord = records.First();
+    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutes));
+    // 11/26/2021 23:49:56
+    var fromTimeString = fromTime.ToString("MM/dd/yyyy HH:mm:ss");
+
+    var oldest = default(PowerMeasureRead);
+
+    foreach (var item in records)
+    {
+        if (item.Sampling < fromTime)
+        {
+            break;
+        }
+        oldest = item;
+    }
+
+    if (oldest == null)
+        return Results.NoContent();
+
+    var deltaTime = lastRecord.Sampling - oldest.Sampling;
+    var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
+    var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
+    var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
+
+    return Results.Ok(new
+    {
+        Duration = deltaTime,
+        InHigh = deltaInHigh,
+        InLow = deltaInLow,
+        Out = deltaOut,
+    });
 });
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
@@ -149,22 +161,54 @@ internal record MyStromMeasure(DateTime Sampling, uint Power, uint Energy)
 
 }
 
+[Table("Objects")]
 internal record Object(string Id, DateTime Sampling, string CounterId, string ObjectId, uint Value)
 {
 
 }
 
+[Table("LastMeasureByCounter")]
 internal record LastMeasure(string ObjectId, string CounterId, string MeasureId)
 {
 
 }
 
+[Table("Counters")]
 internal record CounterDefinition(string Id, string Name, string Description, string Unit,
     bool IsCumulative, bool IsAbsolute, byte exposant)
 {
 
 }
+
+[Table("Measures")]
 internal record Measure(string Id, DateTime SamplingDate, string CounterId, string ObjectId, uint Value)
 {
 
+}
+
+class CosmosDbContext : DbContext
+{
+    public CosmosDbContext(DbContextOptions<CosmosDbContext> dbContextOptions) : base(dbContextOptions)
+    {
+
+    }
+
+    public DbSet<PowerMeasureRead> PowerMeasures { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PowerMeasureRead>()
+            .HasNoDiscriminator()
+            .ToContainer("RawMeasures")
+            .HasPartitionKey(pm => pm.samplingdate)
+            .HasKey(pm => pm.Id);
+    }
+}
+
+class PowerMeasureRead : PowerMeasure
+{
+    public string samplingdate { get; set; } // 11/26/2021 23:49:56
+    public string Id { get; set; }
+
+    public ulong _ts { get; set; }
 }

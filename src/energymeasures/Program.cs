@@ -8,21 +8,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+const string MyAllowSpecificOrigins = "development";
+
 builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"], builder.Configuration["CosmosDbName"]);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      builder =>
+                      {
+                          builder.WithOrigins("http://localhost:4200",
+                                              "http://localhost");
+                      });
+});
 
 var app = builder.Build();
+app.UseCors();
 
 // Configure the HTTP request pipeline.
 
+app.MapGet("/", () => "Hello CORS!");
 
-app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int minutes) =>
+app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
 {
-    if (minutes == 0)
-        minutes = 30;
+    var minutesSafe = minutes ?? 30;
 
-    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutes).ToArray();
+    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
     var lastRecord = records.First();
-    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutes));
+    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
     // 11/26/2021 23:49:56
     var fromTimeString = fromTime.ToString("MM/dd/yyyy HH:mm:ss");
 
@@ -52,7 +64,7 @@ app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int minutes) =>
         InLow = deltaInLow,
         Out = deltaOut,
     });
-});
+}).RequireCors(MyAllowSpecificOrigins);
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {

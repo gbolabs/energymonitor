@@ -9,7 +9,7 @@ import { MeasuresService } from 'src/services/measures.service';
 })
 export class AppComponent {
 
-  measure: Measure = { duration: "", inHigh: 0, inLow: 0, out: 0 };
+  measure: Measure | undefined;
   title = 'web';
   /**
    *
@@ -17,8 +17,13 @@ export class AppComponent {
   constructor(private measureService: MeasuresService) {
 
   }
+  
+  ngOnInit(): void {
+    this.getMeasure();
+  }
 
   getMeasure(): void {
-    this.measure = this.measureService.getMeasure();
+    this.measureService.getMeasure()
+      .subscribe(measure=>this.measure=measure);
   }
 }

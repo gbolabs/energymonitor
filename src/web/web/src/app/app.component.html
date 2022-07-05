@@ -1,0 +1,7 @@
+<div>Last 30min</div>
+
+<div *ngIf="measure">
+  <span>Consumed High [kWh]: </span>{{measure.inHigh}}
+  <span>Consumed Low [kWh]: </span>{{measure.inLow}}
+  <span>Injected Total [kWh]: </span>{{measure.out}}
+</div>

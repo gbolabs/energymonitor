@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -39,15 +42,94 @@ app.MapGet("/api/v1/measures", () =>
     );
 });
 
-app.MapPost("/api/v1/measures/mystrom/", (String csvText) =>
+app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {
-    if(string.IsNullOrWhiteSpace(csvText))
+    using (var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8))
     {
-        return Results.NoContent();
+
+        // Read the raw file as a `string`.
+        string fileContent = await reader.ReadToEndAsync();
+        var lines = fileContent.Split(Environment.NewLine);
+        var mystrom = new List<MyStromMeasure>();
+        List<string> skippedLines = new();
+        List<string> invalidEnergy = new();
+        List<string> invalidPower = new();
+        List<string> invalidDateTime = new();
+        List<string> failedLines = new();
+
+        foreach (var l in lines)
+        {
+            if (l.Trim().StartsWith("device")) continue;
+
+            var line = l.Trim().Split(',');
+
+            if (line.Length < 6)
+            {
+                skippedLines.Add(l);
+                failedLines.Add(l);
+                continue;
+            }
+            if (!decimal.TryParse(line[4], out var energy))
+            {
+                invalidEnergy.Add(line[4]);
+                failedLines.Add(l);
+                continue;
+            }
+            if (!decimal.TryParse(line[3], out var power))
+            {
+                invalidPower.Add(line[3]);
+                failedLines.Add(l);
+                continue;
+            }
+            if (!DateTime.TryParse(line[1], out var dt))
+            {
+                invalidDateTime.Add(line[1]);
+                failedLines.Add(l);
+                continue;
+            }
+
+
+            mystrom.Add(new MyStromMeasure
+            (
+                dt, (uint)(energy * 100), (uint)(power * 100)
+            ));
+        }
+
+        // Do something with `fileContent`...
+
+        return Results.Ok(new
+        {
+            Result = new
+            {
+                RawLines = lines.Length,
+                Skipped = new
+                {
+                    Count = skippedLines.Count,
+                    Samples = skippedLines.Count > 0 ? skippedLines.Take(3).Concat(new List<string> { "..." }).Concat(skippedLines.TakeLast(3)) : Enumerable.Empty<string>()
+                },
+                InvalidDateTime = new
+                {
+                    Count = invalidDateTime.Count,
+                    Samples = invalidDateTime.Count > 0 ? invalidDateTime.Take(3).Concat(new List<string> { "..." }).Concat(invalidDateTime.TakeLast(3)) : Enumerable.Empty<string>()
+                },
+                InvalidEnergy = new
+                {
+                    Count = invalidEnergy.Count,
+                    Samples = invalidEnergy.Count > 0 ? invalidEnergy.Take(3).Concat(new List<string> { "..." }).Concat(invalidEnergy.TakeLast(3)) : Enumerable.Empty<string>()
+                },
+                InvalidPower = new
+                {
+                    Count = invalidPower.Count,
+                    Samples = invalidPower.Count > 0 ? invalidPower.Take(3).Concat(new List<string> { "..." }).Concat(invalidPower.TakeLast(3)) : Enumerable.Empty<string>()
+                },
+                FailedLines = failedLines.Count > 0 ? failedLines.Take(3).Concat(new List<string> { "..." }).Concat(failedLines.TakeLast(3)) : Enumerable.Empty<string>(),
+                ImportedMeasure = mystrom.Count,
+                Measures = mystrom
+            }
+        }); ;
     }
-    
-    return Results.Ok(csvText);
-});
+}).Accepts<IFormFile>("text/csv");
+//.Produces(200);
 
 app.Run();
 

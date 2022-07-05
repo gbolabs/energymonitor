@@ -1,7 +1,41 @@
-<div>Last 30min</div>
+<h1>Energy Report</h1>
+<h3>Last 30min</h3>
+<div><input type="button" title="Refresh" value="Refresh"></div>
+<div *ngIf="measure30">
+  <ul>
+    <li><span>Consumed High [kWh]: </span>{{measure30.inHigh}}</li>
+    <li><span>Consumed Low [kWh]: </span>{{measure30.inLow}}</li>
+    <li><span>Injected Total [kWh]: </span>{{measure30.out}}</li>
+  </ul>
+</div>
 
-<div *ngIf="measure">
-  <span>Consumed High [kWh]: </span>{{measure.inHigh}}
-  <span>Consumed Low [kWh]: </span>{{measure.inLow}}
-  <span>Injected Total [kWh]: </span>{{measure.out}}
+<h3>Last 2h</h3>
+<div><input type="button" title="Refresh" value="Refresh"></div>
+<div *ngIf="measure2h">
+  <ul>
+  <li><span>Consumed High [kWh]: </span>{{measure2h.inHigh}}</li>
+  <li><span>Consumed Low [kWh]: </span>{{measure2h.inLow}}</li>
+  <li><span>Injected Total [kWh]: </span>{{measure2h.out}}</li>
+</ul>
+</div>
+
+<h3>Today</h3>
+<div><input type="button" title="Refresh" value="Refresh"></div>
+<div *ngIf="measureToday">
+  <ul>
+  <li><span>Consumed High [kWh]: </span>{{measureToday.inHigh}}</li>
+  <li><span>Consumed Low [kWh]: </span>{{measureToday.inLow}}</li>
+  <li><span>Injected Total [kWh]: </span>{{measureToday.out}}</li>
+</ul>
+</div>
+
+<h3>Yesterday</h3>
+<div><input type="button" title="Refresh" value="Refresh"></div>
+<div *ngIf="measureYesterday">
+  <ul>
+  <li><span>Consumed High [kWh]: </span>{{measureYesterday.inHigh}}</li>
+  <li><span>Consumed Low [kWh]: </span>{{measureYesterday.inLow}}</li>
+  <li><span>Injected Total [kWh]: </span>{{measureYesterday.out}}</li>
+</ul>
+  <li><span>Produced Total [kWh]: </span>N/A</li>
 </div>

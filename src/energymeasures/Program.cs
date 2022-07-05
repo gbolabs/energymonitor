@@ -16,7 +16,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       builder =>
                       {
-                          builder.WithOrigins("http://localhost:4200",
+                          builder.WithOrigins("https://stopr114emp001.z1.web.core.windows.net",
+                              "https://energy.isago.ch",
+                                                "http://localhost:4200",
                                               "http://localhost");
                       });
 });

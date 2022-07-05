@@ -9,7 +9,10 @@ import { MeasuresService } from 'src/services/measures.service';
 })
 export class AppComponent {
 
-  measure: Measure | undefined;
+  measure30: Measure | undefined;
+  measure2h: Measure | undefined;
+  measureToday: Measure | undefined;
+  measureYesterday: Measure | undefined;
   title = 'web';
   /**
    *
@@ -17,13 +20,15 @@ export class AppComponent {
   constructor(private measureService: MeasuresService) {
 
   }
-  
+
   ngOnInit(): void {
-    this.getMeasure();
+    this.refreshMeasures();
   }
 
-  getMeasure(): void {
-    this.measureService.getMeasure()
-      .subscribe(measure=>this.measure=measure);
+  refreshMeasures(): void {
+    this.measureService.getMeasureMin(30)
+      .subscribe(measure => this.measure30 = measure);
+      this.measureService.getMeasureMin(240)
+        .subscribe(measure => this.measure2h = measure);
   }
 }

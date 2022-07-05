@@ -13,7 +13,7 @@ export class AppComponent {
   measure2h: Measure | undefined;
   measureToday: Measure | undefined;
   measureYesterday: Measure | undefined;
-  title = 'web';
+  title = 'Energy Report';
   /**
    *
    */
@@ -30,5 +30,7 @@ export class AppComponent {
       .subscribe(measure => this.measure30 = measure);
       this.measureService.getMeasureMin(240)
         .subscribe(measure => this.measure2h = measure);
+        this.measureService.getMeasureToday()
+          .subscribe(measure => this.measureToday = measure);
   }
 }

@@ -10,14 +10,17 @@ export class MeasuresService {
 
   // private hostname = 'http://localhost:49154/';  // URL to web api
   private hostname = 'https://measures.wittybay-1b34bb22.westeurope.azurecontainerapps.io/';  // URL to web api
-  private api = 'api/v1/measures/last';
+  private api = 'api/v1/measures/';
 
   constructor(
     private http: HttpClient) {
 
   }
   getMeasureMin(minutes: number): Observable<Measure> {
-    return this.http.get<Measure>(this.hostname + this.api + "?minutes=" + minutes);
+    return this.http.get<Measure>(this.hostname + this.api + "last?minutes=" + minutes);
+  }
+  getMeasureToday(): Observable<Measure> {
+    return this.http.get<Measure>(this.hostname + this.api + "today");
   }
 }
 export const MEASURE: Measure = {

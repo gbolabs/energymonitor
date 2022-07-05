@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "mystromlogger": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

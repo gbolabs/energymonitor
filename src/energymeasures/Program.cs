@@ -30,15 +30,14 @@ app.UseCors();
 
 app.MapGet("/", () => "Hello CORS!");
 
-app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
+app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
 {
-    var minutesSafe = minutes ?? 30;
+    var minutesSafe = 800;
 
     var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
     var lastRecord = records.First();
-    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
-    // 11/26/2021 23:49:56
-    var fromTimeString = fromTime.ToString("MM/dd/yyyy HH:mm:ss");
+    var fromTime = DateTime.Today;
+
 
     var oldest = default(PowerMeasureRead);
 
@@ -61,12 +60,59 @@ app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
 
     return Results.Ok(new
     {
+        From = oldest.Sampling,
+        To = lastRecord.Sampling,
+        Duration = deltaTime,
+        InHigh = deltaInHigh,
+        InLow = deltaInLow,
+        Out = deltaOut,
+    });
+
+}).RequireCors(MyAllowSpecificOrigins)
+.Produces(200, contentType: "application/json");
+
+app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
+{
+    var minutesSafe = minutes ?? 30;
+
+    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
+    var lastRecord = records.First();
+    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
+
+    var oldest = default(PowerMeasureRead);
+
+    foreach (var item in records)
+    {
+        if (item.Sampling < fromTime)
+        {
+            break;
+        }
+        oldest = item;
+    }
+
+    if (oldest == null)
+        return Results.NoContent();
+
+    var deltaTime = lastRecord.Sampling - oldest.Sampling;
+    var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
+    var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
+    var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
+
+    return Results.Ok(new
+    {
+        From = oldest.Sampling,
+        To = lastRecord.Sampling,
         Duration = deltaTime,
         InHigh = deltaInHigh,
         InLow = deltaInLow,
         Out = deltaOut,
     });
 }).RequireCors(MyAllowSpecificOrigins);
+
+app.MapPost("/api/v2/measures/mystrom/upload/{objectId}/", (MyStromReport report) =>
+{
+    return Results.Ok(report);
+});
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {
@@ -159,6 +205,10 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 
 app.Run();
 
+internal record MyStromReport(decimal Power, decimal Ws, bool Relay, decimal Temperature)
+{
+    
+}
 internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);

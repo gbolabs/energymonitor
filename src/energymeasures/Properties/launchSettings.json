@@ -30,6 +30,7 @@
     "Docker": {
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/weatherforecast",
+      "DockerfileRunArguments": "--hostname api --network pr114emdev",
       "publishAllPorts": true
     }
   }

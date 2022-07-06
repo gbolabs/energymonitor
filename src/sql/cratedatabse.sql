@@ -74,7 +74,8 @@ CREATE TABLE [dbo].[LastMeasureByCounter](
 	[ObjectId] [uniqueidentifier] NOT NULL,
  CONSTRAINT [PK_LastMeasureByCounter] PRIMARY KEY CLUSTERED 
 (
-	[CounterId] ASC
+	[CounterId] ASC,
+	[ObjectId] ASC
 )WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO

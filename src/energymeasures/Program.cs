@@ -109,9 +109,13 @@ app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
     });
 }).RequireCors(MyAllowSpecificOrigins);
 
-app.MapPost("/api/v2/measures/mystrom/upload/{objectId}/", (MyStromReport report) =>
+app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [FromBody]MyStromReport report) =>
 {
-    return Results.Ok(report);
+    return Results.Ok(new
+    {
+        objectId,
+        report
+    });
 });
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
@@ -207,7 +211,7 @@ app.Run();
 
 internal record MyStromReport(decimal Power, decimal Ws, bool Relay, decimal Temperature)
 {
-    
+
 }
 internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
 {

@@ -28,19 +28,8 @@ jobs:
       
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
-        uses: actions/checkout@v3   
-            
-      - name: Cache node modules
-        uses: actions/cache@v1
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-            
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v1.4.2
-
+        uses: actions/checkout@v3
+        
       - name: Install Dependencies
         run: npm ci
             

@@ -36,8 +36,8 @@ jobs:
       - name: Build Application
         run: npm run build
       
-      # - name: List Files in Distribution Directory
-      #   run: ls -R ./dist
+      - name: List Files in Distribution Directory
+        run: ls -R ./dist
 
       - name: Azure Login
         uses: azure/login@v1
@@ -49,6 +49,12 @@ jobs:
         with:
           inlineScript: |
               az storage blob upload-batch --account-name stopr114emp001 --auth-mode login -d '$web' -s ./dist
-    
+      
+      # Azure logout
+      - name: Azure logout
+        uses: azure/CLI@v1
+        run: |
+              az logout
+        if: always()
           
       

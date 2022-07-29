@@ -52,7 +52,6 @@ jobs:
       
       # Azure logout
       - name: Azure logout
-        uses: azure/CLI@v1
         run: |
               az logout
         if: always()

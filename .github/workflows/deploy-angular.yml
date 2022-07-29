@@ -36,5 +36,10 @@ jobs:
       - name: Build Application
         run: npm run build
       
-      - name: List Files in Distribution Directory
-        run: ls -R ./dist
+      # - name: List Files in Distribution Directory
+      #   run: ls -R ./dist
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}

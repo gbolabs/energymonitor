@@ -42,4 +42,13 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZ_LOGIN_PR114_EM_PRD }}
+      
+      - name: Upload to blob storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+              az storage blob upload-batch --account-name stopr114emp001 --auth-mode login -d '$web' -s ./dist
+    
+          
+      

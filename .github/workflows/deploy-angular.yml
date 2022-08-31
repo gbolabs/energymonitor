@@ -43,7 +43,7 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-              az storage blob upload-batch --account-name stopr114emp001 --auth-mode login -d '$web' -s ./src/web/dist/web
+              az storage blob upload-batch --account-name stopr114emp001 --auth-mode login --overwrite -d '$web' -s ./src/web/dist/web
       
       # Azure logout
       - name: Azure logout

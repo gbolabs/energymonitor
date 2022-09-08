@@ -19,19 +19,23 @@ jobs:
       uses: Azure/login@v1.4.5
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
-    
+        
     - name: Azure Container Registry Login
-      uses: azure/CLI@v1
+      uses: Azure/docker-login@v1
       with:
-        inlineScript: |
-          az acr login -n crisagocmn.azurecr.io
+        # Container registry username
+        username: crisagocmn
+        # Container registry password
+        password: ${{secrets.ACR_CRISAGOCMN_LOGIN}}
+        # Container registry server url
+        login-server: crisagocmn.azurecr.io
   
     - uses: actions/checkout@v3
     - name: Build the Docker image
       working-directory: 'src/'
       run: docker build . --file energymeasures/Dockerfile --tag crisagocmn.azurecr.io/pr114/emonitor:1.0\
       
-    - name: Build the Docker image
+    - name: Push docker image
       run: docker push crisagocmn.azurecr.io/pr114/emonitor:1.0
     
     - name: Azure WebApp

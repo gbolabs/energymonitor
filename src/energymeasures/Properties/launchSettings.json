@@ -1,22 +1,13 @@
 {
-  "$schema": "https://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:46156",
-      "sslPort": 0
-    }
-  },
   "profiles": {
     "energymeasures": {
       "commandName": "Project",
-      "launchBrowser": true,
-      "launchUrl": "weatherforecast",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "pr114energymeasures": "AccountEndpoint=https://cosmosprivpr114em001.documents.azure.com:443/;AccountKey=XePvwN9SD2GhKuIo2UJnncRNONG5mmCPoUVEUeefpunXoQR18glZp54lbYGQn8vocZwDv63srWBi5pHMIP4i3g==;",
+        "CosmosDbName": "powerMeter_Measures"
       },
-      "applicationUrl": "http://localhost:5209",
+      "applicationUrl": "",
       "dotnetRunMessages": true
     },
     "IIS Express": {
@@ -29,9 +20,21 @@
     },
     "Docker": {
       "commandName": "Docker",
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/weatherforecast",
-      "DockerfileRunArguments": "--hostname api --network pr114emdev",
+      "environmentVariables": {
+        "CosmosDbName": "powerMeter_Measures",
+        "pr114energymeasures": "AccountEndpoint=https:/cosmosprivpr114em001.documents.azure.com:443/;AccountKey=B8wZOTcjpnr9C8tgQHETzbZY2EeWJ770zknTvJD8arPJwEa35vri3Ot62QdM3TlNQWQFJFKUOr6jLRJ5nkagvQ==;"
+      },
+      "DockerfileRunArguments": "--hostname api",
       "publishAllPorts": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:46156",
+      "sslPort": 0
     }
   }
 }

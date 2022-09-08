@@ -1,4 +1,4 @@
-name: Docker Image CD
+name: API CD
 
 on:
   push:
@@ -15,21 +15,35 @@ jobs:
       uses: Azure/login@v1.4.5
       with:
         # Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS
-        creds: # optional
+        creds: ${{secrets.AZURE_CREDENTIALS}}
         # ClientId of the Azure Service principal created.
-        client-id: # optional
+        # client-id: # optional
         # TenantId of the Azure Service principal created.
-        tenant-id: # optional
+        tenant-id: 1d4783f4-883d-4508-8466-75c99fdf6d1c
         # Azure subscriptionId
-        subscription-id: # optional
+        subscription-id: fe48618e-da51-410f-ab18-bf1341baad76
         # Set this value to true to enable Azure PowerShell Login in addition to Az CLI login
-        enable-AzPSSession: # optional
+        #enable-AzPSSession: # optional
         # Name of the environment. Supported values are azurecloud, azurestack, azureusgovernment, azurechinacloud, azuregermancloud. Default being azurecloud
-        environment: # optional, default is azurecloud
+        #environment: # optional, default is azurecloud
         # Set this value to true to enable support for accessing tenants without subscriptions
-        allow-no-subscriptions: # optional
+        #allow-no-subscriptions: # optional
         # Provide audience field for access-token. Default value is api://AzureADTokenExchange
-        audience: # optional, default is api://AzureADTokenExchange
+        #audience: # optional, default is api://AzureADTokenExchange
+    
+    - name: Azure Container Registry Login
+      uses: Azure/docker-login@v1
+      with:
+        # Container registry server url
+        login-server: crisagocmn.azurecr.io
+        
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      working-directory: 'src/'
+      run: docker build . --file energymeasures/Dockerfile --tag crisagocmn.azurecr.io/pr114/emonitor:0.9
+      
+    - name: Build the Docker image
+      run: docker push crisagocmn.azurecr.io/pr114/emonitor:0.9
     
     - name: Azure WebApp
       uses: Azure/webapps-deploy@v2

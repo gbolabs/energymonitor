@@ -1,8 +1,13 @@
 using ingress_function;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Fluent;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.InteropServices;
+using Container = Microsoft.Azure.Cosmos.Container;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 const string MyAllowSpecificOrigins = "development";
 
 builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"], builder.Configuration["CosmosDbName"]);
+builder.Services.AddSingleton(new CosmosProvider(
+    builder.Configuration["pr114energymeasures"],
+    builder.Configuration["CosmosDbName"]));
+
+builder.Services.AddTransient<MeasureProvider>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
@@ -18,8 +29,8 @@ builder.Services.AddCors(options =>
                       {
                           builder.WithOrigins("https://stopr114emp001.z1.web.core.windows.net",
                               "https://energy.isago.ch",
-                                                "http://localhost:4200",
-                                              "http://localhost");
+                              "http://localhost:4200",
+                              "http://localhost");
                       });
 });
 
@@ -71,45 +82,24 @@ app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
 }).RequireCors(MyAllowSpecificOrigins)
 .Produces(200, contentType: "application/json");
 
-app.MapGet("/api/v1/measures/last", (CosmosDbContext dbContext, int? minutes) =>
+app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider, int days) =>
 {
-    var minutesSafe = minutes ?? 30;
+    var now = DateTime.Now;
+    var startDay = DateOnly.FromDateTime(now.Subtract(TimeSpan.FromDays(days))).ToDateTime(TimeOnly.MinValue);
+    var stopDay = DateOnly.FromDateTime(now).ToDateTime(TimeOnly.MinValue);
+    var data = await provider.GetMeasuresDayRangeAsync(startDay, stopDay);
+    return data == null ? Results.BadRequest() : Results.Ok(data);
 
-    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
-    var lastRecord = records.First();
-    var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
+}).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
 
-    var oldest = default(PowerMeasureRead);
-
-    foreach (var item in records)
-    {
-        if (item.Sampling < fromTime)
-        {
-            break;
-        }
-        oldest = item;
-    }
-
-    if (oldest == null)
-        return Results.NoContent();
-
-    var deltaTime = lastRecord.Sampling - oldest.Sampling;
-    var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
-    var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
-    var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
-
-    return Results.Ok(new
-    {
-        From = oldest.Sampling,
-        To = lastRecord.Sampling,
-        Duration = deltaTime,
-        InHigh = deltaInHigh,
-        InLow = deltaInLow,
-        Out = deltaOut,
-    });
+app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
+{
+    //var data = dbContext.GetMeasures(minutes ?? 30);
+    var data = provider.GetMeasures(minutes ?? 30);
+    return data == null ? Results.NoContent() : Results.Ok(data);
 }).RequireCors(MyAllowSpecificOrigins);
 
-app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [FromBody]MyStromReport report) =>
+app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [FromBody] MyStromReport report) =>
 {
     return Results.Ok(new
     {
@@ -209,13 +199,144 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 
 app.Run();
 
+internal class CosmosProvider
+{
+    public CosmosProvider(string connectionString, string cosmosDbContainer)
+    {
+        ConnectionString = connectionString;
+        CosmosDb = cosmosDbContainer;
+        CosmosDbContainer = "RawMeasures";
+
+
+        CosmosSerializationOptions serializerOptions = new()
+        {
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+        };
+        Client = new CosmosClientBuilder(ConnectionString)
+            .WithSerializerOptions(serializerOptions)
+            .Build();
+    }
+    public string ConnectionString { get; set; }
+    public string CosmosDb { get; private set; }
+    public string CosmosDbContainer { get; set; }
+    public CosmosClient Client { get; }
+
+    public async Task<Database> GetDatabase()
+    {
+        return await Client.CreateDatabaseIfNotExistsAsync(CosmosDb);
+    }
+
+    public async Task<Container> GetContainerAsync()
+    {
+        return (await GetDatabase()).GetContainer(CosmosDbContainer);
+    }
+}
+
+internal class MeasureProvider
+{
+    private readonly CosmosDbContext _cosmosDbContext;
+    private readonly CosmosProvider _cosmosProvider;
+
+    public MeasureProvider(CosmosDbContext cosmosDbContext, CosmosProvider cosmosProvider)
+    {
+        _cosmosDbContext = cosmosDbContext;
+        _cosmosProvider = cosmosProvider;
+    }
+
+    public object? GetMeasures(int minutes)
+    {
+
+        var minutesSafe = minutes;
+
+        var records = _cosmosDbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
+        var lastRecord = records.First();
+        var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
+
+        var oldest = default(PowerMeasureRead);
+
+        foreach (var item in records)
+        {
+            if (item.Sampling < fromTime)
+            {
+                break;
+            }
+            oldest = item;
+        }
+
+        if (oldest == null)
+            return default(object);
+
+        var deltaTime = lastRecord.Sampling - oldest.Sampling;
+        var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
+        var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
+        var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
+
+        return new
+        {
+            From = oldest.Sampling,
+            To = lastRecord.Sampling,
+            Duration = deltaTime,
+            InHigh = deltaInHigh,
+            InLow = deltaInLow,
+            Out = deltaOut,
+        };
+    }
+
+    public async Task<object?> GetMeasuresDayRangeAsync(DateTime startDay, DateTime stopDay)
+    {
+        try
+        {
+            var container = (await _cosmosProvider.GetContainerAsync());
+
+            var sql = "SELECT * FROM RawMeasures c WHERE " +
+                //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
+                //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
+                $"c.Sampling> \"{startDay.ToString("s")}\" AND " +
+                $"c.Sampling < \"{stopDay.AddDays(1).ToString("s")}\" ORDER BY c.Sampling DESC";
+
+
+            using FeedIterator<RawMeasures> feed = container.GetItemQueryIterator<RawMeasures>(sql);
+            if (!feed.HasMoreResults)
+                return null;
+
+            var record = await feed.ReadNextAsync();
+
+            var first = record.First();
+            var last = record.Last();
+
+            if (first != null && last != null)
+            {
+                var deltaTime = first.Sampling - last.Sampling;
+                var deltaInHigh = first.ConsumedHighTarif - last.ConsumedHighTarif;
+                var deltaInLow = first.ConsumedLowTarif - last.ConsumedLowTarif;
+                var deltaOut = first.InjectedEnergyTotal - last.InjectedEnergyTotal;
+
+                return new
+                {
+                    From = first.Sampling,
+                    To = last.Sampling,
+                    Duration = deltaTime,
+                    InHigh = deltaInHigh,
+                    InLow = deltaInLow,
+                    Out = deltaOut,
+                };
+            }
+            return null;
+        }
+        catch (CosmosException e)
+        {
+            return e;
+        }
+        catch (NotSupportedException e)
+        {
+            return e;
+        }
+    }
+}
+
 internal record MyStromReport(decimal Power, decimal Ws, bool Relay, decimal Temperature)
 {
 
-}
-internal record WeatherForecast(DateTime Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
 internal record RawMeasures(Guid Id, DateTime Sampling, decimal ConsumedHighTarif,
     decimal ConsumedLowTarif, decimal LiveCurrentL1,
@@ -249,7 +370,7 @@ internal record CounterDefinition(string Id, string Name, string Description, st
 }
 
 [Table("Measures")]
-internal record Measure(string Id, DateTime SamplingDate, string CounterId, string ObjectId, uint Value)
+internal record Measure(string Id, DateTime Sampling, string CounterId, string ObjectId, uint Value)
 {
 
 }

@@ -22,6 +22,9 @@ builder.Services.AddSingleton(new CosmosProvider(
 
 builder.Services.AddTransient<MeasureProvider>();
 
+builder.Services.AddSwaggerDocument();
+builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
@@ -35,7 +38,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseOpenApi();
+app.UseSwaggerUi3();
 app.UseCors();
+
 
 // Configure the HTTP request pipeline.
 

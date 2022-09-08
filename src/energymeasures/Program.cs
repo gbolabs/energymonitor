@@ -82,13 +82,22 @@ app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
 }).RequireCors(MyAllowSpecificOrigins)
 .Produces(200, contentType: "application/json");
 
+app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, DateOnly date) =>
+{
+    var fromDate = date.ToDateTime(TimeOnly.MinValue);
+    var toDate = date.AddDays(1).ToDateTime(TimeOnly.MinValue);
+    var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
+    return data == null ? Results.NoContent() : Results.Ok(data);
+
+}).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
+
 app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider, int days) =>
 {
     var now = DateTime.Now;
     var startDay = DateOnly.FromDateTime(now.Subtract(TimeSpan.FromDays(days))).ToDateTime(TimeOnly.MinValue);
-    var stopDay = DateOnly.FromDateTime(now).ToDateTime(TimeOnly.MinValue);
+    var stopDay = now;
     var data = await provider.GetMeasuresDayRangeAsync(startDay, stopDay);
-    return data == null ? Results.BadRequest() : Results.Ok(data);
+    return data == null ? Results.NoContent() : Results.Ok(data);
 
 }).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
 
@@ -288,33 +297,40 @@ internal class MeasureProvider
         {
             var container = (await _cosmosProvider.GetContainerAsync());
 
-            var sql = "SELECT * FROM RawMeasures c WHERE " +
+            var queryStart = "SELECT * FROM RawMeasures c WHERE " +
                 //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
                 //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
-                $"c.Sampling> \"{startDay.ToString("s")}\" AND " +
-                $"c.Sampling < \"{stopDay.AddDays(1).ToString("s")}\" ORDER BY c.Sampling DESC";
+                $"c.Sampling>= \"{startDay.ToString("s")}\" AND " +
+                $"c.Sampling < \"{startDay.AddMinutes(3).ToString("s")}\" ORDER BY c.Sampling DESC";
 
 
-            using FeedIterator<RawMeasures> feed = container.GetItemQueryIterator<RawMeasures>(sql);
-            if (!feed.HasMoreResults)
+            var queryStop = "SELECT * FROM RawMeasures c WHERE " +
+                //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
+                //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
+                $"c.Sampling < \"{stopDay.ToString("s")}\" AND " +
+                $"c.Sampling > \"{stopDay.AddMinutes(-3).ToString("s")}\" ORDER BY c.Sampling DESC";
+
+
+            using FeedIterator<RawMeasures> startFeed = container.GetItemQueryIterator<RawMeasures>(queryStart);
+            using FeedIterator<RawMeasures> stopFeed = container.GetItemQueryIterator<RawMeasures>(queryStop);
+            if (!startFeed.HasMoreResults || !stopFeed.HasMoreResults)
                 return null;
 
-            var record = await feed.ReadNextAsync();
 
-            var first = record.First();
-            var last = record.Last();
+            var oldestRecord = (await startFeed.ReadNextAsync()).FirstOrDefault();
+            var newestRecord = (await stopFeed.ReadNextAsync()).LastOrDefault();
 
-            if (first != null && last != null)
+            if (oldestRecord != null && newestRecord != null)
             {
-                var deltaTime = first.Sampling - last.Sampling;
-                var deltaInHigh = first.ConsumedHighTarif - last.ConsumedHighTarif;
-                var deltaInLow = first.ConsumedLowTarif - last.ConsumedLowTarif;
-                var deltaOut = first.InjectedEnergyTotal - last.InjectedEnergyTotal;
+                var deltaTime = newestRecord.Sampling - oldestRecord.Sampling;
+                var deltaInHigh = newestRecord.ConsumedHighTarif - oldestRecord.ConsumedHighTarif;
+                var deltaInLow = newestRecord.ConsumedLowTarif - oldestRecord.ConsumedLowTarif;
+                var deltaOut = newestRecord.InjectedEnergyTotal - oldestRecord.InjectedEnergyTotal;
 
                 return new
                 {
-                    From = first.Sampling,
-                    To = last.Sampling,
+                    From = oldestRecord.Sampling,
+                    To = newestRecord.Sampling,
                     Duration = deltaTime,
                     InHigh = deltaInHigh,
                     InLow = deltaInLow,

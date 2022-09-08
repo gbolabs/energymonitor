@@ -13,6 +13,7 @@ export class AppComponent {
   measure2h: Measure | undefined;
   measureToday: Measure | undefined;
   measureYesterday: Measure | undefined;
+  lastWeek: Measure | undefined;
   title = 'Energy Report';
   /**
    *
@@ -28,9 +29,13 @@ export class AppComponent {
   refreshMeasures(): void {
     this.measureService.getMeasureMin(30)
       .subscribe(measure => this.measure30 = measure);
-      this.measureService.getMeasureMin(240)
-        .subscribe(measure => this.measure2h = measure);
-        this.measureService.getMeasureToday()
-          .subscribe(measure => this.measureToday = measure);
+    this.measureService.getMeasureMin(240)
+      .subscribe(measure => this.measure2h = measure);
+    this.measureService.getMeasureToday()
+      .subscribe(measure => this.measureToday = measure);
+    this.measureService.getMeasureYesterday()
+      .subscribe(measure => this.measureYesterday = measure);
+    this.measureService.getLastWeek()
+      .subscribe(measure => this.lastWeek = measure);
   }
 }

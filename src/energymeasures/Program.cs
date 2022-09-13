@@ -133,6 +133,8 @@ app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provide
                };
 
     var measures = days.Select(async pair => await provider.GetMeasuresDayRangeAsync(pair.startDay, pair.stopDay))
+                    .Select(r => r.Result)
+                    .Where(r => r != null)
                     .ToArray();
 
     return measures == null ? Results.NoContent() : Results.Ok(measures);

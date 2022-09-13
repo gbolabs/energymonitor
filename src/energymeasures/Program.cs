@@ -4,9 +4,11 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Container = Microsoft.Azure.Cosmos.Container;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -150,6 +152,7 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
         string fileContent = await reader.ReadToEndAsync();
         var lines = fileContent.Split(Environment.NewLine);
         var mystrom = new List<MyStromMeasure>();
+        var orderedList = new SortedList<DateTime, MyStromMeasure>();
         List<string> skippedLines = new();
         List<string> invalidEnergy = new();
         List<string> invalidPower = new();
@@ -159,8 +162,11 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
         foreach (var l in lines)
         {
             if (l.Trim().StartsWith("device")) continue;
-
             var line = l.Trim().Split(',');
+
+            // Line look like: 
+            // device_label,time,mac,power(Watt),energy(Ws) ,cost,temperature
+            // Solaire,2022 - 09 - 05 00:00:00,083AF256A96C,0,0,0,14.46
 
             if (line.Length < 6)
             {
@@ -188,13 +194,14 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
             }
 
 
-            mystrom.Add(new MyStromMeasure
+            var record = new MyStromMeasure
             (
                 dt, (uint)(energy * 100), (uint)(power * 100)
-            ));
-        }
+            );
 
-        // Do something with `fileContent`...
+            mystrom.Add(record);
+            orderedList.Add(record.Sampling, record);
+        }
 
         return Results.Ok(new
         {
@@ -223,7 +230,8 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
                 },
                 FailedLines = failedLines.Count > 0 ? failedLines.Take(3).Concat(new List<string> { "..." }).Concat(failedLines.TakeLast(3)) : Enumerable.Empty<string>(),
                 ImportedMeasure = mystrom.Count,
-                Measures = mystrom
+                Measures = mystrom,
+                SortedList = orderedList
             }
         }); ;
     }

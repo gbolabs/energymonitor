@@ -123,6 +123,21 @@ app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [Fro
     });
 });
 
+app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provider, int day) =>
+{
+    var days = from d in Enumerable.Range(0, day)
+               select new
+               {
+                   startDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MinValue),
+                   stopDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MaxValue)
+               };
+
+    var measures = days.Select(async pair => await provider.GetMeasuresDayRangeAsync(pair.startDay, pair.stopDay))
+                    .ToArray();
+
+    return measures == null ? Results.NoContent() : Results.Ok(measures);
+});
+
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {
     using (var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8))

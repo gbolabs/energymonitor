@@ -136,7 +136,8 @@ app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provide
                     .ToArray();
 
     return measures == null ? Results.NoContent() : Results.Ok(measures);
-});
+}).RequireCors(MyAllowSpecificOrigins)
+.Produces(200, contentType: "application/json");
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {

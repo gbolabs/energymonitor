@@ -2,13 +2,10 @@ using ingress_function;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Fluent;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
+using System.Configuration;
+using System.Globalization;
 using Container = Microsoft.Azure.Cosmos.Container;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +18,9 @@ builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energyme
 builder.Services.AddSingleton(new CosmosProvider(
     builder.Configuration["pr114energymeasures"],
     builder.Configuration["CosmosDbName"]));
+
+builder.Services.AddDbContext<MyDatabaseContext>(options =>
+        options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
 
 builder.Services.AddTransient<MeasureProvider>();
 
@@ -165,7 +165,9 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
             var line = l.Trim().Split(',');
 
             // Line look like: 
+            //    1           2   3        4       5          6     7
             // device_label,time,mac,power(Watt),energy(Ws) ,cost,temperature
+            //     1          2                    3        4 5 6 7   
             // Solaire,2022 - 09 - 05 00:00:00,083AF256A96C,0,0,0,14.46
 
             if (line.Length < 6)
@@ -174,13 +176,13 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
                 failedLines.Add(l);
                 continue;
             }
-            if (!decimal.TryParse(line[4], out var energy))
+            if (!decimal.TryParse(line[4], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out var energy))
             {
                 invalidEnergy.Add(line[4]);
                 failedLines.Add(l);
                 continue;
             }
-            if (!decimal.TryParse(line[3], out var power))
+            if (!decimal.TryParse(line[3], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out var power))
             {
                 invalidPower.Add(line[3]);
                 failedLines.Add(l);
@@ -196,12 +198,28 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 
             var record = new MyStromMeasure
             (
-                dt, (uint)(energy * 100), (uint)(power * 100)
+                dt, (uint)(power * 100), (uint)(energy * 100)
             );
 
             mystrom.Add(record);
             orderedList.Add(record.Sampling, record);
         }
+
+        var objects = new List<Sensor>();
+        var counters = new List<CounterDefinition>();
+
+        var energyCounter = new CounterDefinition("12", "energy", "Monitors energy", "W/s", false, true, 0);
+        var sensor = new Sensor("1", new List<string> { energyCounter.Id });
+
+        var measures = orderedList.Select(r => new Measure(
+            new Random().Next().ToString(),
+            r.Value.Sampling,
+            energyCounter.Id,
+            sensor.Id,
+            r.Value.Energy));
+
+        var lastMeasure = measures.Last();
+
 
         return Results.Ok(new
         {
@@ -393,19 +411,31 @@ internal record RawMeasures(Guid Id, DateTime Sampling, decimal ConsumedHighTari
 {
 }
 
+internal class MyDatabaseContext : DbContext
+{
+    public MyDatabaseContext(DbContextOptions<MyDatabaseContext> options)
+        : base(options)
+    {
+    }
+    public DbSet<Sensor>? Sensors { get; set; }
+    public DbSet<CounterDefinition>? CounterDefinitions { get; set; }
+    public DbSet<LastMeasure>? LastMeasures { get; set; }
+    public DbSet<Measure>? Measures { get; set; }
+}
+
 internal record MyStromMeasure(DateTime Sampling, uint Power, uint Energy)
 {
 
 }
 
-[Table("Objects")]
-internal record Object(string Id, DateTime Sampling, string CounterId, string ObjectId, uint Value)
+[Table("Sensors")]
+internal record Sensor(string Id, List<string> CounterIds)
 {
 
 }
 
 [Table("LastMeasureByCounter")]
-internal record LastMeasure(string ObjectId, string CounterId, string MeasureId)
+internal record LastMeasure(string SensorId, string CounterId, string MeasureId)
 {
 
 }
@@ -418,7 +448,7 @@ internal record CounterDefinition(string Id, string Name, string Description, st
 }
 
 [Table("Measures")]
-internal record Measure(string Id, DateTime Sampling, string CounterId, string ObjectId, uint Value)
+internal record Measure(string Id, DateTime Sampling, string CounterId, string SensorId, uint Value)
 {
 
 }

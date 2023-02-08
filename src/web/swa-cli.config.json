@@ -6,7 +6,10 @@
       "outputLocation": "dist/web",
       "appBuildCommand": "npm run build",
       "run": "npm start",
-      "appDevserverUrl": "http://localhost:4200"
+      "appDevserverUrl": "http://localhost:4200",
+      "appName": "statapp-energyreport-ui-prd-001",
+      "resourceGroup": "rg-pr114-energymeter-prd-001",
+      "location": "westeurope"
     }
   }
 }

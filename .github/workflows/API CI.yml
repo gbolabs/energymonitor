@@ -1,0 +1,22 @@
+name: API CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'src/web/*'
+      - '**/*.yml'
+      - '**/*.md'
+    
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      working-directory: 'src/'
+      run: docker build . --file energymeasures/Dockerfile --tag pr114/emonitor:$(date +%s) 

@@ -11,7 +11,6 @@ export class MeasuresService {
 
   // private hostname = 'http://localhost:49154/';  // URL to web api
   private hostname = 'https://app-pr114-energyapi-01.azurewebsites.net/';  // URL to web api
-  // private hostname = 'https://measures.wittybay-1b34bb22.westeurope.azurecontainerapps.io/';  // URL to web api
   private api = 'api/v1/measures/';
 
   constructor(

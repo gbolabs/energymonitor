@@ -25,4 +25,8 @@
 		<ProjectReference Include="..\common\common.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Db\Sql" />
+	</ItemGroup>
+
 </Project>

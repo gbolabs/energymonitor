@@ -1,12 +1,7 @@
-using ingress_function;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Fluent;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Configuration;
 using System.Globalization;
-using Container = Microsoft.Azure.Cosmos.Container;
+using energymeasures;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,34 +9,51 @@ var builder = WebApplication.CreateBuilder(args);
 
 const string MyAllowSpecificOrigins = "development";
 
-builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"], builder.Configuration["CosmosDbName"]);
+builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"],
+    builder.Configuration["CosmosDbName"]);
+builder.Services.AddCosmos<SolarProductionCosmosDbContext>(builder.Configuration["pr114energymeasures"],
+    "solar-production");
+
 builder.Services.AddSingleton(new CosmosProvider(
     builder.Configuration["pr114energymeasures"],
     builder.Configuration["CosmosDbName"]));
+builder.Services.AddSingleton(new CosmosSolarProductionProvider(
+    builder.Configuration["pr114energymeasures"]));
 
 builder.Services.AddDbContext<MyDatabaseContext>(options =>
-        options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
+    options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
 
 builder.Services.AddTransient<MeasureProvider>();
+builder.Services.AddLogging(builder =>
+{
+    builder.AddConsole();
+    builder.AddDebug();
+});
 
-builder.Services.AddSwaggerDocument();
+builder.Services.AddSwaggerDocument(builder =>
+{
+    builder.Title = "Energy Measures API";
+    builder.Version = "v1";
+    builder.Description = "The Energy Measures API provides access to the energy measures.";
+    builder.DocumentName = "v1";
+});
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
-                      builder =>
-                      {
-                          builder.WithOrigins("https://stopr114emp001.z1.web.core.windows.net",
-                              "https://energy.isago.ch",
-                              "http://localhost:4200",
-                              "http://localhost");
-                      });
+        builder =>
+        {
+            builder.WithOrigins("https://stopr114emp001.z1.web.core.windows.net",
+                "https://energy.isago.ch",
+                "http://localhost:4200",
+                "http://localhost");
+        });
 });
 
 var app = builder.Build();
 app.UseOpenApi();
-app.UseSwaggerUi3();
+app.UseSwaggerUi3(builder => { builder.Path = "/api/v1"; });
 app.UseCors();
 
 
@@ -50,45 +62,45 @@ app.UseCors();
 app.MapGet("/", () => "Hello CORS!");
 
 app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
-{
-    var minutesSafe = 800;
-
-    var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
-    var lastRecord = records.First();
-    var fromTime = DateTime.Today;
-
-
-    var oldest = default(PowerMeasureRead);
-
-    foreach (var item in records)
     {
-        if (item.Sampling < fromTime)
+        var minutesSafe = 800;
+
+        var records = dbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
+        var lastRecord = records.First();
+        var fromTime = DateTime.Today;
+
+
+        var oldest = default(PowerMeasureRead);
+
+        foreach (var item in records)
         {
-            break;
+            if (item.Sampling < fromTime)
+            {
+                break;
+            }
+
+            oldest = item;
         }
-        oldest = item;
-    }
 
-    if (oldest == null)
-        return Results.NoContent();
+        if (oldest == null)
+            return Results.NoContent();
 
-    var deltaTime = lastRecord.Sampling - oldest.Sampling;
-    var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
-    var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
-    var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
+        var deltaTime = lastRecord.Sampling - oldest.Sampling;
+        var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
+        var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
+        var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
 
-    return Results.Ok(new
-    {
-        From = oldest.Sampling,
-        To = lastRecord.Sampling,
-        Duration = deltaTime,
-        InHigh = deltaInHigh,
-        InLow = deltaInLow,
-        Out = deltaOut,
-    });
-
-}).RequireCors(MyAllowSpecificOrigins)
-.Produces(200, contentType: "application/json");
+        return Results.Ok(new
+        {
+            From = oldest.Sampling,
+            To = lastRecord.Sampling,
+            Duration = deltaTime,
+            InHigh = deltaInHigh,
+            InLow = deltaInLow,
+            Out = deltaOut,
+        });
+    }).RequireCors(MyAllowSpecificOrigins)
+    .Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, DateOnly date) =>
 {
@@ -96,7 +108,6 @@ app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, Date
     var toDate = date.AddDays(1).ToDateTime(TimeOnly.MinValue);
     var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
     return data == null ? Results.NoContent() : Results.Ok(data);
-
 }).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider, int days) =>
@@ -106,7 +117,6 @@ app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider,
     var stopDay = now;
     var data = await provider.GetMeasuresDayRangeAsync(startDay, stopDay);
     return data == null ? Results.NoContent() : Results.Ok(data);
-
 }).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
@@ -115,6 +125,61 @@ app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
     var data = provider.GetMeasures(minutes ?? 30);
     return data == null ? Results.NoContent() : Results.Ok(data);
 }).RequireCors(MyAllowSpecificOrigins);
+
+app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
+        ILogger<MyStromReport> logger,
+        SolarProductionCosmosDbContext solarProductionCosmosDbContext) =>
+    {
+
+        foreach (var production in solarProductionCosmosDbContext.LastProductions)
+        {
+            solarProductionCosmosDbContext.LastProductions.Remove(production);
+        }
+        solarProductionCosmosDbContext.LastProductions.Add(new LastProduction
+        {
+            Id = report.Sampling.Ticks.ToString(),
+            Sampling = report.Sampling,
+            ProductionAverage = report.Ws,
+            CurrentPower = report.Power
+        });
+
+        var dailyAverage = solarProductionCosmosDbContext.Daily
+            .FirstOrDefault(d => d.DateOnly == DateOnly.FromDateTime(report.Sampling.Date));
+
+        if (dailyAverage == null)
+        {
+            // Init new day
+            solarProductionCosmosDbContext.Daily.Add(new DailyAverageProduction
+            {
+                Id = DateOnly.FromDateTime(report.Sampling.Date).ToShortDateString(),
+                DateOnly = DateOnly.FromDateTime(report.Sampling.Date),
+                TotalEnergy = report.Ws,
+                Records = 1
+            });
+        }
+        else
+        {
+            dailyAverage.TotalEnergy += report.Ws;
+            dailyAverage.Records += 1;
+            solarProductionCosmosDbContext.Daily.Update(dailyAverage);
+        }
+
+        try
+        {
+            solarProductionCosmosDbContext.SaveChanges();
+        }
+        catch (Exception ce)
+        {
+            logger.LogError(ce, "Error saving to CosmosDB");
+        }
+
+        return Results.Ok(new
+        {
+            report
+        });
+    }) //.RequireAuthorization("MyStromUploadPolicy")
+    .Accepts<MyStromReport>(contentType: "application/json")
+    .Produces<DailyProductionReport>();
 
 app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [FromBody] MyStromReport report) =>
 {
@@ -126,28 +191,27 @@ app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [Fro
 });
 
 app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provider, int day) =>
-{
-    var days = from d in Enumerable.Range(0, day)
-               select new
-               {
-                   startDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MinValue),
-                   stopDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MaxValue)
-               };
+    {
+        var days = from d in Enumerable.Range(0, day)
+            select new
+            {
+                startDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MinValue),
+                stopDay = DateOnly.FromDateTime(DateTime.Now).AddDays(d * -1).ToDateTime(TimeOnly.MaxValue)
+            };
 
-    var measures = days.Select(async pair => await provider.GetMeasuresDayRangeAsync(pair.startDay, pair.stopDay))
-                    .Select(r => r.Result)
-                    .Where(r => r != null)
-                    .ToArray();
+        var measures = days.Select(async pair => await provider.GetMeasuresDayRangeAsync(pair.startDay, pair.stopDay))
+            .Select(r => r.Result)
+            .Where(r => r != null)
+            .ToArray();
 
-    return measures == null ? Results.NoContent() : Results.Ok(measures);
-}).RequireCors(MyAllowSpecificOrigins)
-.Produces(200, contentType: "application/json");
+        return measures == null ? Results.NoContent() : Results.Ok(measures);
+    }).RequireCors(MyAllowSpecificOrigins)
+    .Produces(200, contentType: "application/json");
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
 {
     using (var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8))
     {
-
         // Read the raw file as a `string`.
         string fileContent = await reader.ReadToEndAsync();
         var lines = fileContent.Split(Environment.NewLine);
@@ -176,18 +240,23 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
                 failedLines.Add(l);
                 continue;
             }
-            if (!decimal.TryParse(line[4], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out var energy))
+
+            if (!decimal.TryParse(line[4], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture,
+                    out var energy))
             {
                 invalidEnergy.Add(line[4]);
                 failedLines.Add(l);
                 continue;
             }
-            if (!decimal.TryParse(line[3], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out var power))
+
+            if (!decimal.TryParse(line[3], System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture,
+                    out var power))
             {
                 invalidPower.Add(line[3]);
                 failedLines.Add(l);
                 continue;
             }
+
             if (!DateTime.TryParse(line[1], out var dt))
             {
                 invalidDateTime.Add(line[1]);
@@ -229,253 +298,42 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
                 Skipped = new
                 {
                     Count = skippedLines.Count,
-                    Samples = skippedLines.Count > 0 ? skippedLines.Take(3).Concat(new List<string> { "..." }).Concat(skippedLines.TakeLast(3)) : Enumerable.Empty<string>()
+                    Samples = skippedLines.Count > 0
+                        ? skippedLines.Take(3).Concat(new List<string> { "..." }).Concat(skippedLines.TakeLast(3))
+                        : Enumerable.Empty<string>()
                 },
                 InvalidDateTime = new
                 {
                     Count = invalidDateTime.Count,
-                    Samples = invalidDateTime.Count > 0 ? invalidDateTime.Take(3).Concat(new List<string> { "..." }).Concat(invalidDateTime.TakeLast(3)) : Enumerable.Empty<string>()
+                    Samples = invalidDateTime.Count > 0
+                        ? invalidDateTime.Take(3).Concat(new List<string> { "..." }).Concat(invalidDateTime.TakeLast(3))
+                        : Enumerable.Empty<string>()
                 },
                 InvalidEnergy = new
                 {
                     Count = invalidEnergy.Count,
-                    Samples = invalidEnergy.Count > 0 ? invalidEnergy.Take(3).Concat(new List<string> { "..." }).Concat(invalidEnergy.TakeLast(3)) : Enumerable.Empty<string>()
+                    Samples = invalidEnergy.Count > 0
+                        ? invalidEnergy.Take(3).Concat(new List<string> { "..." }).Concat(invalidEnergy.TakeLast(3))
+                        : Enumerable.Empty<string>()
                 },
                 InvalidPower = new
                 {
                     Count = invalidPower.Count,
-                    Samples = invalidPower.Count > 0 ? invalidPower.Take(3).Concat(new List<string> { "..." }).Concat(invalidPower.TakeLast(3)) : Enumerable.Empty<string>()
+                    Samples = invalidPower.Count > 0
+                        ? invalidPower.Take(3).Concat(new List<string> { "..." }).Concat(invalidPower.TakeLast(3))
+                        : Enumerable.Empty<string>()
                 },
-                FailedLines = failedLines.Count > 0 ? failedLines.Take(3).Concat(new List<string> { "..." }).Concat(failedLines.TakeLast(3)) : Enumerable.Empty<string>(),
+                FailedLines = failedLines.Count > 0
+                    ? failedLines.Take(3).Concat(new List<string> { "..." }).Concat(failedLines.TakeLast(3))
+                    : Enumerable.Empty<string>(),
                 ImportedMeasure = mystrom.Count,
                 Measures = mystrom,
                 SortedList = orderedList
             }
-        }); ;
+        });
+        ;
     }
 }).Accepts<IFormFile>("text/csv");
 //.Produces(200);
 
 app.Run();
-
-internal class CosmosProvider
-{
-    public CosmosProvider(string connectionString, string cosmosDbContainer)
-    {
-        ConnectionString = connectionString;
-        CosmosDb = cosmosDbContainer;
-        CosmosDbContainer = "RawMeasures";
-
-
-        CosmosSerializationOptions serializerOptions = new()
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-        };
-        Client = new CosmosClientBuilder(ConnectionString)
-            .WithSerializerOptions(serializerOptions)
-            .Build();
-    }
-    public string ConnectionString { get; set; }
-    public string CosmosDb { get; private set; }
-    public string CosmosDbContainer { get; set; }
-    public CosmosClient Client { get; }
-
-    public async Task<Database> GetDatabase()
-    {
-        return await Client.CreateDatabaseIfNotExistsAsync(CosmosDb);
-    }
-
-    public async Task<Container> GetContainerAsync()
-    {
-        return (await GetDatabase()).GetContainer(CosmosDbContainer);
-    }
-}
-
-internal class MeasureProvider
-{
-    private readonly CosmosDbContext _cosmosDbContext;
-    private readonly CosmosProvider _cosmosProvider;
-
-    public MeasureProvider(CosmosDbContext cosmosDbContext, CosmosProvider cosmosProvider)
-    {
-        _cosmosDbContext = cosmosDbContext;
-        _cosmosProvider = cosmosProvider;
-    }
-
-    public object? GetMeasures(int minutes)
-    {
-
-        var minutesSafe = minutes;
-
-        var records = _cosmosDbContext.PowerMeasures.OrderByDescending(p => p._ts).Take(minutesSafe).ToArray();
-        var lastRecord = records.First();
-        var fromTime = lastRecord.Sampling.Subtract(TimeSpan.FromMinutes(minutesSafe));
-
-        var oldest = default(PowerMeasureRead);
-
-        foreach (var item in records)
-        {
-            if (item.Sampling < fromTime)
-            {
-                break;
-            }
-            oldest = item;
-        }
-
-        if (oldest == null)
-            return default(object);
-
-        var deltaTime = lastRecord.Sampling - oldest.Sampling;
-        var deltaInHigh = lastRecord.ConsumedHighTarif - oldest.ConsumedHighTarif;
-        var deltaInLow = lastRecord.ConsumedLowTarif - oldest.ConsumedLowTarif;
-        var deltaOut = lastRecord.InjectedEnergyTotal - oldest.InjectedEnergyTotal;
-
-        return new
-        {
-            From = oldest.Sampling,
-            To = lastRecord.Sampling,
-            Duration = deltaTime,
-            InHigh = deltaInHigh,
-            InLow = deltaInLow,
-            Out = deltaOut,
-        };
-    }
-
-    public async Task<object?> GetMeasuresDayRangeAsync(DateTime startDay, DateTime stopDay)
-    {
-        try
-        {
-            var container = (await _cosmosProvider.GetContainerAsync());
-
-            var queryStart = "SELECT * FROM RawMeasures c WHERE " +
-                //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
-                //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
-                $"c.Sampling>= \"{startDay.ToString("s")}\" AND " +
-                $"c.Sampling < \"{startDay.AddMinutes(3).ToString("s")}\" ORDER BY c.Sampling DESC";
-
-
-            var queryStop = "SELECT * FROM RawMeasures c WHERE " +
-                //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
-                //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
-                $"c.Sampling < \"{stopDay.ToString("s")}\" AND " +
-                $"c.Sampling > \"{stopDay.AddMinutes(-3).ToString("s")}\" ORDER BY c.Sampling DESC";
-
-
-            using FeedIterator<RawMeasures> startFeed = container.GetItemQueryIterator<RawMeasures>(queryStart);
-            using FeedIterator<RawMeasures> stopFeed = container.GetItemQueryIterator<RawMeasures>(queryStop);
-            if (!startFeed.HasMoreResults || !stopFeed.HasMoreResults)
-                return null;
-
-
-            var oldestRecord = (await startFeed.ReadNextAsync()).FirstOrDefault();
-            var newestRecord = (await stopFeed.ReadNextAsync()).LastOrDefault();
-
-            if (oldestRecord != null && newestRecord != null)
-            {
-                var deltaTime = newestRecord.Sampling - oldestRecord.Sampling;
-                var deltaInHigh = newestRecord.ConsumedHighTarif - oldestRecord.ConsumedHighTarif;
-                var deltaInLow = newestRecord.ConsumedLowTarif - oldestRecord.ConsumedLowTarif;
-                var deltaOut = newestRecord.InjectedEnergyTotal - oldestRecord.InjectedEnergyTotal;
-
-                return new
-                {
-                    From = oldestRecord.Sampling,
-                    To = newestRecord.Sampling,
-                    Duration = deltaTime,
-                    InHigh = deltaInHigh,
-                    InLow = deltaInLow,
-                    Out = deltaOut,
-                };
-            }
-            return null;
-        }
-        catch (CosmosException e)
-        {
-            return e;
-        }
-        catch (NotSupportedException e)
-        {
-            return e;
-        }
-    }
-}
-
-internal record MyStromReport(decimal Power, decimal Ws, bool Relay, decimal Temperature)
-{
-
-}
-internal record RawMeasures(Guid Id, DateTime Sampling, decimal ConsumedHighTarif,
-    decimal ConsumedLowTarif, decimal LiveCurrentL1,
-    decimal LiveCurrentL2, decimal LiveCurrentL3,
-    decimal? InjectedEnergyTotal)
-{
-}
-
-internal class MyDatabaseContext : DbContext
-{
-    public MyDatabaseContext(DbContextOptions<MyDatabaseContext> options)
-        : base(options)
-    {
-    }
-    public DbSet<Sensor>? Sensors { get; set; }
-    public DbSet<CounterDefinition>? CounterDefinitions { get; set; }
-    public DbSet<LastMeasure>? LastMeasures { get; set; }
-    public DbSet<Measure>? Measures { get; set; }
-}
-
-internal record MyStromMeasure(DateTime Sampling, uint Power, uint Energy)
-{
-
-}
-
-[Table("Sensors")]
-internal record Sensor(string Id, List<string> CounterIds)
-{
-
-}
-
-[Table("LastMeasureByCounter")]
-internal record LastMeasure(string SensorId, string CounterId, string MeasureId)
-{
-
-}
-
-[Table("Counters")]
-internal record CounterDefinition(string Id, string Name, string Description, string Unit,
-    bool IsCumulative, bool IsAbsolute, byte exposant)
-{
-
-}
-
-[Table("Measures")]
-internal record Measure(string Id, DateTime Sampling, string CounterId, string SensorId, uint Value)
-{
-
-}
-
-class CosmosDbContext : DbContext
-{
-    public CosmosDbContext(DbContextOptions<CosmosDbContext> dbContextOptions) : base(dbContextOptions)
-    {
-
-    }
-
-    public DbSet<PowerMeasureRead> PowerMeasures { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<PowerMeasureRead>()
-            .HasNoDiscriminator()
-            .ToContainer("RawMeasures")
-            .HasPartitionKey(pm => pm.samplingdate)
-            .HasKey(pm => pm.Id);
-    }
-}
-
-class PowerMeasureRead : PowerMeasure
-{
-    public string samplingdate { get; set; } // 11/26/2021 23:49:56
-    public string Id { get; set; }
-
-    public ulong _ts { get; set; }
-}

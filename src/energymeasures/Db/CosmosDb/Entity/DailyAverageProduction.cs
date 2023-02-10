@@ -11,11 +11,11 @@ internal class DailyAverageProduction : CosmosDbEntityBase
     // The format is used to be able to query the data by date.
     public override string PartitionKey
     {
-        get => DateOnly.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        set => DateOnly = DateOnly.Parse(value, CultureInfo.InvariantCulture);
+        get => $"{Date.DayNumber}";
+        set => Date = DateOnly.FromDayNumber(int.Parse(value));
     }
 
-    public DateOnly DateOnly { get; set; }
+    public DateOnly Date { get; set; }
 
     /// <summary>
     /// This property is not serialized to the CosmosDb.

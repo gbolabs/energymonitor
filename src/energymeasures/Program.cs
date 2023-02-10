@@ -144,15 +144,15 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         });
 
         var dailyAverage = solarProductionCosmosDbContext.Daily
-            .FirstOrDefault(d => d.DateOnly == DateOnly.FromDateTime(report.Sampling.Date));
+            .FirstOrDefault(d => d.Date == DateOnly.FromDateTime(report.Sampling.Date));
 
         if (dailyAverage == null)
         {
             // Init new day
             solarProductionCosmosDbContext.Daily.Add(new DailyAverageProduction
             {
-                Id = DateOnly.FromDateTime(report.Sampling.Date).ToShortDateString(),
-                DateOnly = DateOnly.FromDateTime(report.Sampling.Date),
+                Id = DateOnly.FromDateTime(report.Sampling.Date).DayNumber.ToString(),
+                Date = DateOnly.FromDateTime(report.Sampling.Date),
                 TotalEnergy = report.Ws,
                 Records = 1
             });

@@ -11,4 +11,6 @@ internal class LastProduction : CosmosDbEntityBase
     public DateTime Sampling { get; set; }
     public decimal ProductionAverage { get; set; }
     public decimal CurrentPower { get; set; }
+
+    public decimal Temperature { get; set; }
 }

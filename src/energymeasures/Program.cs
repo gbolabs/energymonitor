@@ -140,7 +140,8 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
             Id = report.Sampling.Ticks.ToString(),
             Sampling = report.Sampling,
             ProductionAverage = report.Ws,
-            CurrentPower = report.Power
+            CurrentPower = report.Power,
+            Temperature = report.Temperature
         });
 
         var dailyAverage = solarProductionCosmosDbContext.Daily

@@ -10,10 +10,10 @@ COPY ["energymeasures/energymeasures.csproj", "energymeasures/"]
 RUN dotnet restore "energymeasures/energymeasures.csproj"
 COPY . .
 WORKDIR "/src/energymeasures"
-RUN dotnet build "energymeasures.csproj" -c Release -o /app/build
+RUN dotnet build "energymeasures.csproj" -c Release -o /app/build -r linux-x64
 
 FROM build AS publish
-RUN dotnet publish "energymeasures.csproj" -c Release -o /app/publish
+RUN dotnet publish "energymeasures.csproj" -c Release -o /app/publish -r linux-x64
 
 FROM base AS final
 WORKDIR /app

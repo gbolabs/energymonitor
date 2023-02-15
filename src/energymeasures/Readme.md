@@ -1,5 +1,9 @@
 # Building
 
+- For MacOS need to have the following environment variable set to instruct docker building in a linux-amd format.
+
+  `export DOCKER_DEFAULT_PLATFORM=linux/amd64`
+
 From the `src` Directory.
 
 ## PRD

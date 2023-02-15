@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using energymeasures;
+using energymeasures.Config;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,8 @@ builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energyme
     builder.Configuration["CosmosDbName"]);
 builder.Services.AddCosmos<SolarProductionCosmosDbContext>(builder.Configuration["pr114energymeasures"],
     "solar-production");
+
+builder.Services.Configure<MyStromProductionConfig>(builder.Configuration.GetSection(nameof(MyStromProductionConfig)));
 
 builder.Services.AddSingleton(new CosmosProvider(
     builder.Configuration["pr114energymeasures"],
@@ -128,13 +132,32 @@ app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
 
 app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         ILogger<MyStromReport> logger,
+        IOptions<MyStromProductionConfig> config,
+        IWebHostEnvironment env,
+        HttpContext context,
         SolarProductionCosmosDbContext solarProductionCosmosDbContext) =>
     {
+        if (config == null && env.EnvironmentName != "Development")
+        {
+            logger.LogCritical("No config found and not in DEV Environment");
+            throw new ApplicationException("No config found and not in DEV Environment");
+        }
+
+        var apiKeyHeader = context.Request.Headers["X-Api-Key"].FirstOrDefault();
+        // Check for the Api-key in case the environment is not development
+        if (!string.Equals(config.Value.UploadKey, apiKeyHeader, StringComparison.OrdinalIgnoreCase)
+            && env.EnvironmentName != "Development")
+        {
+            // No API Key or wrong API Key
+            logger.LogCritical("No API Key or wrong API Key");
+            throw new ApplicationException("No API Key or wrong API Key");
+        }
 
         foreach (var production in solarProductionCosmosDbContext.LastProductions)
         {
             solarProductionCosmosDbContext.LastProductions.Remove(production);
         }
+
         solarProductionCosmosDbContext.LastProductions.Add(new LastProduction
         {
             Id = report.Sampling.Ticks.ToString(),
@@ -182,14 +205,6 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
     .Accepts<MyStromReport>(contentType: "application/json")
     .Produces<DailyProductionReport>();
 
-app.MapPost("/api/v2/measures/mystrom/upload/{objectId}", (string objectId, [FromBody] MyStromReport report) =>
-{
-    return Results.Ok(new
-    {
-        objectId,
-        report
-    });
-});
 
 app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provider, int day) =>
     {
@@ -209,8 +224,28 @@ app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provide
     }).RequireCors(MyAllowSpecificOrigins)
     .Produces(200, contentType: "application/json");
 
-app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request) =>
+app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request,
+    ILogger<MyStromReport> logger,
+    IOptions<MyStromProductionConfig> config,
+    IWebHostEnvironment env,
+    HttpContext context) =>
 {
+    if (config == null && env.EnvironmentName != "Development")
+    {
+        logger.LogCritical("No config found and not in DEV Environment");
+        throw new ApplicationException("No config found and not in DEV Environment");
+    }
+
+    var apiKeyHeader = context.Request.Headers["X-Api-Key"].FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(apiKeyHeader) ||
+        !string.Equals(config.Value.UploadKey, apiKeyHeader, StringComparison.OrdinalIgnoreCase)
+        && env.EnvironmentName != "Development")
+    {
+        // No API Key or wrong API Key
+        logger.LogCritical("No API Key or wrong API Key");
+        throw new ApplicationException("No API Key or wrong API Key");
+    }
+
     using (var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8))
     {
         // Read the raw file as a `string`.

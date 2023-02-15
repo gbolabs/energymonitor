@@ -130,6 +130,43 @@ app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
     return data == null ? Results.NoContent() : Results.Ok(data);
 }).RequireCors(MyAllowSpecificOrigins);
 
+app.MapGet("/api/v3/production/solar/last", (
+        ILogger<LastProductionResponse> logger,
+        SolarProductionCosmosDbContext solarProductionCosmosDbContext) =>
+    {
+        return solarProductionCosmosDbContext.LastProductions.OrderByDescending(p => p.Sampling)
+            .Select(r => new LastProductionResponse()
+            {
+                Duration = r.Duration,
+                Sampling = r.Sampling,
+                CurrentPowerW = r.CurrentPower,
+                ProductionTotalKwh = r.ProductionKwhSinceLastSampling,
+            }).FirstOrDefault();
+    })
+    .Produces<LastProductionResponse>();
+
+
+app.MapGet("/api/v3/production/solar/day/{offset}", (
+        ILogger<DailyProductionReport> logger,
+        SolarProductionCosmosDbContext solarProductionCosmosDbContext, int? offset) =>
+    {
+        var day = DateOnly.FromDateTime(DateTime.Now).AddDays(offset ?? 0);
+        var data = solarProductionCosmosDbContext.Daily.FirstOrDefault(d => d.Date == day);
+
+        if (data == null)
+            return Results.NoContent();
+
+        var duration = data.LastSampling - data.StartOfSun;
+        return Results.Ok(new DailyProductionReport
+        {
+            Date = day.ToDateTime(TimeOnly.MinValue),
+            ProductionKwh = Math.Round(data.AverageProduction * (decimal)duration.TotalSeconds / 3600000,2),
+            Duration = duration,
+            LastSampling = data.LastSampling
+        });
+    })
+    .Produces<DailyProductionReport>();
+
 app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         ILogger<MyStromReport> logger,
         IOptions<MyStromProductionConfig> config,
@@ -137,6 +174,9 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         HttpContext context,
         SolarProductionCosmosDbContext solarProductionCosmosDbContext) =>
     {
+        if (report.Ws == 0 || report.Power == 0)
+            return Results.NoContent();
+
         if (config == null && env.EnvironmentName != "Development")
         {
             logger.LogCritical("No config found and not in DEV Environment");
@@ -153,8 +193,12 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
             throw new ApplicationException("No API Key or wrong API Key");
         }
 
+        var lastRecordSampling = default(DateTime?);
+
         foreach (var production in solarProductionCosmosDbContext.LastProductions)
         {
+            lastRecordSampling ??= production.Sampling;
+
             solarProductionCosmosDbContext.LastProductions.Remove(production);
         }
 
@@ -163,9 +207,11 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
             Id = report.Sampling.Ticks.ToString(),
             Sampling = report.Sampling,
             ProductionAverage = report.Ws,
+            Duration = report.Sampling - (lastRecordSampling ?? report.Sampling),
             CurrentPower = report.Power,
             Temperature = report.Temperature
         });
+
 
         var dailyAverage = solarProductionCosmosDbContext.Daily
             .FirstOrDefault(d => d.Date == DateOnly.FromDateTime(report.Sampling.Date));
@@ -178,12 +224,15 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
                 Id = DateOnly.FromDateTime(report.Sampling.Date).DayNumber.ToString(),
                 Date = DateOnly.FromDateTime(report.Sampling.Date),
                 TotalEnergy = report.Ws,
+                StartOfSun = report.Sampling,
+                LastSampling = report.Sampling,
                 Records = 1
             });
         }
         else
         {
             dailyAverage.TotalEnergy += report.Ws;
+            dailyAverage.LastSampling = report.Sampling;
             dailyAverage.Records += 1;
             solarProductionCosmosDbContext.Daily.Update(dailyAverage);
         }

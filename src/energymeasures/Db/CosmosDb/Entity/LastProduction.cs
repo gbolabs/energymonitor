@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace energymeasures;
 
 internal class LastProduction : CosmosDbEntityBase
@@ -13,4 +15,9 @@ internal class LastProduction : CosmosDbEntityBase
     public decimal CurrentPower { get; set; }
 
     public decimal? Temperature { get; set; }
+    public TimeSpan? Duration { get; set; }
+
+    // Ignore this property when serializing to JSON
+    [JsonIgnore]
+    public decimal ProductionKwhSinceLastSampling => ProductionAverage * (decimal)Duration?.TotalSeconds / 3600000;
 }

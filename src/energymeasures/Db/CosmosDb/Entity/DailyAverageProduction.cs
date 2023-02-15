@@ -26,4 +26,8 @@ internal class DailyAverageProduction : CosmosDbEntityBase
     public decimal TotalEnergy { get; set; }
 
     public int Records { get; set; }
+    
+    public DateTime StartOfSun { get; set; }
+
+    public DateTime LastSampling { get; set; }
 }

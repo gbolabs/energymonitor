@@ -32,6 +32,16 @@ internal class MyStromUploader : IJob
 
         var report = await response.Content.ReadFromJsonAsync<MyStromReport>();
 
+        if (report.Power <= 0)
+        {
+            // No power consumption, no need to upload
+            _logger.LogInformation("No power production, no need to upload");
+            return;
+        }
+        
+        _logger.LogInformation($"Power: {report.Power}");
+        _logger.LogInformation($"Ws: {report.Ws}");
+
         // Add the API key to the header
         httpClient.DefaultRequestHeaders.Add("X-Api-Key", _cloudIngressConfig.ApiKey);
 

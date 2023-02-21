@@ -1,4 +1,4 @@
-name: API CD
+name: MyStronUploader CD (Docker build)
 
 on:
   push:

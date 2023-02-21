@@ -1,11 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Json;
-using System.Text;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Quartz;
 
-internal class MyStromUploader : IHostedService
+internal class MyStromUploader : IJob
 {
     private readonly MyStromSettings _settings;
     private readonly ILogger<MyStromUploader> _logger;
@@ -20,7 +18,10 @@ internal class MyStromUploader : IHostedService
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Method invoked by the timer
+    /// </summary>
+    private async Task Upload()
     {
         // Get the report from the MyStrom switch over the REST API
         using var httpClient = new HttpClient();
@@ -40,22 +41,23 @@ internal class MyStromUploader : IHostedService
         var content = JsonContent.Create(new
         {
             sampling = DateTime.Now,
-            power = report.power,
-            Ws = report.Ws
+            power = report.Power,
+            report.Ws
         });
         var uploadResponse = await httpClient.PostAsync(uploadRequest, content);
         _logger.LogInformation($"Upload response: {await uploadResponse.Content.ReadAsStringAsync()}");
         _logger.LogInformation($"Upload status code: {uploadResponse.StatusCode}");
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public async Task Execute(IJobExecutionContext context)
     {
-        return;
+        await Upload();
     }
 }
 
 internal class MyStromReport
 {
-    public decimal power { get; set; }
+    public decimal Power { get; set; }
     public decimal Ws { get; set; }
 }
+

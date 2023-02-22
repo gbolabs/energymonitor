@@ -2,7 +2,8 @@
 Aims to periodically reads over IR the register of a Landis+Gyr E230 Power Meter and displays some statistics in a console app
 
 # Overview
-![image](https://user-images.githubusercontent.com/232387/220757679-16072d32-311d-4503-bb28-425b2a8d4abd.png)
+![image](https://user-images.githubusercontent.com/232387/220757759-0ba3fb52-b31c-4e30-ac02-91dd572d29ae.png)
+
 
 
 # Material used

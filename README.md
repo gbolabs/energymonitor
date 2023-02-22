@@ -1,10 +1,9 @@
 # Objective
 Aims to periodically reads over IR the register of a Landis+Gyr E230 Power Meter and displays some statistics in a console app
 
-## Side objectives
+# Overview
+![image](https://user-images.githubusercontent.com/232387/220757679-16072d32-311d-4503-bb28-425b2a8d4abd.png)
 
-- Realize a clean and proper C# console application.
-- Submit the read data to a <http://www.volkszaehler.org/> instance hosted on Synology using Docker.
 
 # Material used
 

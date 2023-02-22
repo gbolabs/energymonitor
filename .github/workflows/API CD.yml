@@ -2,12 +2,12 @@ name: API CD
 
 on:
   push:
-    tags:
-      - v1.**
-      
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [ "main" ]
+    paths-include:
+      - 'src/energymeasures/*'
+  
   workflow_dispatch:
+    
 jobs:
 
   build:

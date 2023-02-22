@@ -3,12 +3,10 @@ name: API CI
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'src/web/*'
-      - '**/*.yml'
-      - '**/*.md'
+    paths-include:
+      - 'src/energymeasures/*'
     
-
+  workflow_dispatch:
 jobs:
 
   build:

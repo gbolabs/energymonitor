@@ -24,6 +24,14 @@ builder.Services.AddTransient<MeasureProvider>();
 
 builder.Services.AddSwaggerDocument();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddLogging(b =>
+{
+    if (builder.Environment.EnvironmentName == "Development")
+        b.AddConsole();
+    else
+        // Application insights using the instrumentation key
+        b.AddApplicationInsights(builder.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+});
 
 builder.Services.AddCors(options =>
 {

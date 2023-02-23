@@ -9,7 +9,7 @@
   </ul>
   <h4>Latest Solar Production</h4>
   <ul *ngIf="latestProduction">
-    <li><span>Power [W]: {{latestProduction.currentPowerW}}</span><span style="font-style: italic"> @{{latestProduction.sampling | date: 'HH:mm'}}</span></li>
+    <li><span>Power [W]: {{latestProduction.currentPowerW}}</span><span style="font-style: italic"> @{{latestProduction.sampling | date: 'HH:mm:ss'}}</span></li>
   </ul>
 </div>
 

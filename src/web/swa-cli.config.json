@@ -8,8 +8,7 @@
       "run": "npm start",
       "appDevserverUrl": "http://localhost:4200",
       "appName": "statapp-energyreport-ui-prd-001",
-      "resourceGroup": "rg-pr114-energymeter-prd-001",
-      "location": "westeurope"
+      "resourceGroup": "rg-pr114-energymeter-prd-001"
     }
   }
 }

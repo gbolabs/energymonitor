@@ -3,8 +3,8 @@ name: API CI
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - 'src/energymeasures/**'
+    paths-include:
+      - 'src/energymeasures/*'
     
 
 jobs:

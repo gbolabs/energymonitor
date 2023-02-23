@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {Measure} from 'src/model/Measure';
 import {MeasuresService} from 'src/services/measures.service';
 import {DailyProduction} from "src/model/dailyProduction";
-import {Production} from "src/services/production";
+import {Production} from "../model/production";
 
 @Component({
   selector: 'app-root',

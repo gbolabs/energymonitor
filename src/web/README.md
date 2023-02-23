@@ -43,8 +43,9 @@ swa login --subscription-id {} \
 ```
 
 1. Run `npm run build` to build the project. The build artifacts will be stored in the `dist/` directory.
-2. Run `swa start http://localhost:4200` to start the Static Web Apps CLI. Navigate to `http://localhost:4280/` to view the application.
-3. Run `swa publish` to publish the application to Azure.
-4. Run `swa stop` to stop the Static Web Apps CLI.
-5. Run `swa delete` to delete the Static Web Apps CLI.
-6. Run `swa deploy --deployment-token {token} /dist/web --env {production|preview}` to deploy the application to Azure.
+1. Run `swa start http://localhost:4200` to start the Static Web Apps CLI. Navigate to `http://localhost:4280/` to view the application.
+1. Run `swa publish` to publish the application to Azure.
+1. Run `swa stop` to stop the Static Web Apps CLI.
+1. Run `swa delete` to delete the Static Web Apps CLI.
+1. Run `swa deploy --deployment-token {token} /dist/web --env {production|preview}` to deploy the application to Azure.
+1. Run `swa deploy -n {app_name}` to deploy the application

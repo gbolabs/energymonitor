@@ -1,4 +1,7 @@
 <h1>Energy Report</h1>
+<h2>Week History</h2>
+<div id="graph" style="width: 1024px;height: 768px"></div>
+
 <h3>Last 30min</h3>
 <div><input type="button" title="Refresh" value="Refresh" readonly="readonly"></div>
 <div *ngIf="measure30">
@@ -9,7 +12,8 @@
   </ul>
   <h4>Latest Solar Production</h4>
   <ul *ngIf="latestProduction">
-    <li><span>Power [W]: {{latestProduction.currentPowerW}}</span><span style="font-style: italic"> @{{latestProduction.sampling | date: 'HH:mm:ss'}}</span></li>
+    <li><span>Power [W]: {{latestProduction.currentPowerW}}</span><span
+      style="font-style: italic"> @{{latestProduction.sampling | date: 'HH:mm:ss'}}</span></li>
   </ul>
 </div>
 

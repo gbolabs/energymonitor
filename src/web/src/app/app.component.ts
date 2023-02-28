@@ -3,6 +3,8 @@ import {Measure} from 'src/model/Measure';
 import {MeasuresService} from 'src/services/measures.service';
 import {DailyProduction} from "src/model/dailyProduction";
 import {Production} from "../model/production";
+import * as echarts from 'echarts';
+import {GraphsService} from "../services/graphs.service";
 
 @Component({
   selector: 'app-root',
@@ -24,13 +26,16 @@ export class AppComponent {
   /**
    *
    */
-  constructor(private measureService: MeasuresService) {
+  constructor(private measureService: MeasuresService, private graphServices: GraphsService) {
     this.productionYesterday = new DailyProduction();
     this.productionToday = new DailyProduction();
     this.latestProduction = new Production();
   }
 
   ngOnInit(): void {
+
+    this.initGraphs();
+
     this.refreshMeasures();
   }
 
@@ -50,5 +55,120 @@ export class AppComponent {
     this.measureService.getLastWeek()
       .subscribe(measure => this.lastWeek = measure);
     this.measureService.getLatestProduction().subscribe(production => this.latestProduction = production);
+  }
+
+  private initGraphs() {
+    var myChart = echarts.init(document.getElementById('graph') as HTMLDivElement);
+
+    console.log(this.graphServices.getSeries());
+    myChart.setOption({
+        title: {
+          text: 'Stacked Area Chart'
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          }
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          axisLabel: {
+            formatter: 'Day-{value}'
+          },
+          axisLine: {
+            show: true
+          },
+          data: [6, 5, 4, 3, 2, 1, 0]
+        },
+        yAxis: [
+          {
+            name: 'Energy',
+            type: 'value',
+            position: 'left',
+            offset: 5,
+            axisLine: {
+              show: true
+            },
+            axisLabel: {
+              formatter: '{value} kWh'
+            }
+          }
+        ],
+        series: [
+          {
+            name: 'Solar',
+            type: 'line',
+            stack: 'total',
+            smooth: true,
+            areaStyle: {
+              color: 'orange'
+            },
+            yAxisIndex: 0,
+            emphasis: {
+              focus: 'series'
+            },
+            label: {
+              show: true,
+              position: 'top',
+              color: 'orange'
+            },
+            data: [7, 5, 2, 0, 4, 9, 7]
+          },
+          {
+            name: 'Grid',
+            type: 'line',
+            stack: 'total',
+            smooth: true,
+            areaStyle: {
+              color: 'blue'
+            },
+            yAxisIndex: 0,
+            emphasis: {
+              focus: 'series'
+            },
+            label: {
+              show: true,
+              position: 'top',
+              color: 'blue'
+            },
+            data: this.graphServices.getWeekEnergyConsumptionSeries()
+          },
+          {
+            name: 'Injection',
+            type: 'line',
+            smooth: true,
+            // stack: 'total',
+            // yAxisIndex: 1,
+            label: {
+              show: true,
+              position: 'bottom',
+              color: 'red'
+            },
+            areaStyle: {
+              color: 'red'
+            },
+            emphasis: {
+              focus: 'series'
+            },
+            data: [-0.4, -5, 0, 0, -2, -1, -2]
+          },
+          // {
+          //   name: 'Sun Hours',
+          //   position: 'right',
+          //   type: 'line',
+          //   stack: 'none',
+          //   areaStyle: {
+          //     color: 'yellow'
+          //   },
+          //   data: [8.2, 0, 0, 5, 0, 4, 10.2]
+          // }
+        ]
+      }
+    );
   }
 }

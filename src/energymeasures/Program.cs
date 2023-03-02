@@ -116,6 +116,10 @@ app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
 
 app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, DateOnly date) =>
 {
+    // given the date is today, returns the result of today api
+    if (date == DateOnly.FromDateTime(DateTime.Now))
+        return Results.Redirect("/api/v1/measures/today");
+
     var fromDate = date.ToDateTime(TimeOnly.MinValue);
     var toDate = date.AddDays(1).ToDateTime(TimeOnly.MinValue);
     var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);

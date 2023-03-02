@@ -129,18 +129,6 @@ export class AppComponent {
     };
 
     var options = {
-      title: {
-        text: 'Stacked Area Chart'
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          label: {
-            backgroundColor: '#6a7985'
-          }
-        }
-      },
       xAxis: {
         type: 'category',
         boundaryGap: false,

@@ -3,16 +3,18 @@ import { Measure } from 'src/model/Measure';
 import { MeasuresService } from 'src/services/measures.service';
 import { DailyProduction } from "src/model/dailyProduction";
 import { Production } from "../model/production";
-import * as echarts from 'echarts';
+
 import { GraphsService } from "../services/graphs.service";
-import { map, Observable, observable, toArray, of } from 'rxjs';
-import { TypeModifier } from '@angular/compiler';
+import { map, toArray } from 'rxjs';
+
+declare var echarts: any;
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
+
 export class AppComponent {
 
   measure30: Measure | undefined;
@@ -60,7 +62,8 @@ export class AppComponent {
   }
 
   private initGraphs() {
-    var myChart = echarts.init(document.getElementById('graph') as HTMLDivElement);
+    // var myChart = echarts.init(document.getElementById('graph') as HTMLDivElement);
+    let myChart = echarts.init(document.getElementById('graph'));
 
     this.graphServices.getWeekEnergyConsumptionSeries().pipe(map(series => series.in))
       .subscribe(inArray => {

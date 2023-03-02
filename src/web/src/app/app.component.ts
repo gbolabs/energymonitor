@@ -145,12 +145,12 @@ export class AppComponent {
         type: 'category',
         boundaryGap: false,
         axisLabel: {
-          formatter: 'Day-{value}'
+          // formatter: 'Day-{value}'
         },
         axisLine: {
           show: true
         },
-        data: [6, 5, 4, 3, 2, 1, 0]
+        data: ['']
       },
       yAxis: [
         {
@@ -185,6 +185,7 @@ export class AppComponent {
         })
         outSeries.data = x.map(s => s.out * -1)
         solarSeries.data = x.map(s => s.solar)
+        options.xAxis.data = x.map(s => s.date.toLocaleDateString());
 
         myChart.setOption(options);
       });

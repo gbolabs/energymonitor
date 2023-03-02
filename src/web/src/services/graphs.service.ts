@@ -38,7 +38,7 @@ export class GraphsService {
   }
 
   public getWeekEnergyConsumptionSeries(): Observable<DailyMeasure> {
-    let a = range(1, 8).pipe(map((value) => {
+    let a = range(0, 10).pipe(map((value) => {
       let day = new Date(Date.now() - (value * 24 * 60 * 60 * 1000));
       return this.measuresService.getMeasureOfDay(day)
         .pipe(map((value) => {

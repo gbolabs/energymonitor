@@ -37,6 +37,11 @@ export class MeasuresService {
     return this.http.get<Measure>(this.hostname + this.api + "/date/" + yesterdayString);
   }
 
+  getMeasureOfDay(day: Date): Observable<Measure> {
+    var dayString = this._datePipe.transform(day, "yyyy-MM-dd");
+    return this.http.get<Measure>(this.hostname + this.api + "/date/" + dayString);
+  }
+
   getLastWeek(): Observable<Measure> {
     return this.http.get<Measure>(this.hostname + this.api + "/days/last/7");
   }

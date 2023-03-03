@@ -2,10 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to .NET Functions",
-            "type": "coreclr",
+            "name": "Launch MS Edge against localhost, with sourcemaps",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:4200",
+            "sourceMaps": true,
+            "webRoot": "${workspaceFolder}/src/web"
+        },
+        {
+            "name": "Attach to Edge",
+            "type": "msedge",
             "request": "attach",
-            "processId": "${command:azureFunctions.pickProcess}"
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/src/web"
         }
     ]
 }

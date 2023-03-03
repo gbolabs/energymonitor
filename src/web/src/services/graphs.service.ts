@@ -42,15 +42,13 @@ export class GraphsService {
       let day = new Date(Date.now() - (value * 24 * 60 * 60 * 1000));
       return this.measuresService.getMeasureOfDay(day)
         .pipe(map((value) => {
+          var combined = value?.inHigh + value?.inLow;
           return {
             date: day,
-            in: value?.inHigh ?? 0 + value?.inLow ?? 0,
+            in: combined ?? 0,
             out: value?.out ?? 0,
           } as DailyMeasure;
         }));
-      // this.measuresService.getSolarProduction(value*-1).subscribe((value) => {
-      //   dayMeasure.solar = value?.productionKwh ?? 0;
-      // });
     }));
     let b = a.pipe(mergeAll()).pipe(map((value) => {
       // number of days in the past

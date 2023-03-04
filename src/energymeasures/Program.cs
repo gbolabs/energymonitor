@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using energymeasures;
 using energymeasures.Config;
+using energymeasures.Db.CosmosDb;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -142,6 +143,50 @@ app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
     return data == null ? Results.NoContent() : Results.Ok(data);
 }).RequireCors(MyAllowSpecificOrigins);
 
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
+        return data == null ? Results.NoContent() : Results.Ok(data);
+    });
+
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/details",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var measures = await provider.GetRange(fromDate, toDate);
+        return measures?.Length > 0 ? Results.Ok(measures) : Results.NoContent();
+    }).Produces<RawMeasures[]>();
+
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/grouped/{interval}",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to, TimeSpan interval) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var measures = await provider.GetRange(fromDate, toDate);
+        
+        // group by interval
+        var grouped = measures.GroupBy(m => m.Sampling.RoundDown(interval))
+            .Select(g =>
+            {
+                var oldest = g.Last();
+                var newest = g.First();
+                return new EnergyReport
+                {
+                    From = oldest.Sampling,
+                    To = newest.Sampling,
+                    InHigh = newest.ConsumedHighTarif- oldest.ConsumedHighTarif,
+                    InLow = newest.ConsumedLowTarif - oldest.ConsumedLowTarif,
+                    Out = newest.InjectedEnergyTotal - oldest.InjectedEnergyTotal,
+                };
+            }).ToArray();
+        
+        return grouped?.Length > 0 ? Results.Ok(grouped.OrderBy(r=>r.From)) : Results.NoContent();
+    }).Produces<EnergyReport[]>();
+
 app.MapGet("/api/v3/production/solar/last", (
         ILogger<LastProductionResponse> logger,
         SolarProductionCosmosDbContext solarProductionCosmosDbContext) =>
@@ -157,6 +202,25 @@ app.MapGet("/api/v3/production/solar/last", (
     })
     .Produces<LastProductionResponse>();
 
+app.MapGet("/api/v3/production/solar/range/{from}/{to}", (
+        ILogger<LastProductionResponse> logger,
+        SolarProductionCosmosDbContext solarProductionCosmosDbContext,
+        DateTime from, DateTime to) =>
+    {
+        var data = solarProductionCosmosDbContext.LastProductions
+            .Where(p => p.Sampling >= from && p.Sampling <= to)
+            .OrderBy(p => p.Sampling)
+            .Select(r => new LastProductionResponse()
+            {
+                Duration = r.Duration,
+                Sampling = r.Sampling,
+                CurrentPowerW = r.CurrentPower,
+                ProductionTotalKwh = r.ProductionKwhSinceLastSampling,
+            }).ToArray();
+
+        return data;
+    })
+    .Produces<LastProductionResponse[]>();
 
 app.MapGet("/api/v3/production/solar/day/{offset}", (
         ILogger<DailyProductionReport> logger,
@@ -172,7 +236,7 @@ app.MapGet("/api/v3/production/solar/day/{offset}", (
         return Results.Ok(new DailyProductionReport
         {
             Date = day.ToDateTime(TimeOnly.MinValue),
-            ProductionKwh = Math.Round(data.AverageProduction * (decimal)duration.TotalSeconds / 3600000,2),
+            ProductionKwh = Math.Round(data.AverageProduction * (decimal)duration.TotalSeconds / 3600000, 2),
             Duration = duration,
             LastSampling = data.LastSampling
         });

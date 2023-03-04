@@ -1,3 +1,4 @@
+using energymeasures.Db.CosmosDb;
 using Microsoft.Azure.Cosmos;
 
 namespace energymeasures;
@@ -6,11 +7,13 @@ internal class MeasureProvider
 {
     private readonly CosmosDbContext _cosmosDbContext;
     private readonly CosmosProvider _cosmosProvider;
+    private readonly ILogger<MeasureProvider> _logger;
 
-    public MeasureProvider(CosmosDbContext cosmosDbContext, CosmosProvider cosmosProvider)
+    public MeasureProvider(CosmosDbContext cosmosDbContext, CosmosProvider cosmosProvider, ILogger<MeasureProvider> logger)
     {
         _cosmosDbContext = cosmosDbContext;
         _cosmosProvider = cosmosProvider;
+        _logger = logger;
     }
 
     public object? GetMeasures(int minutes)
@@ -52,62 +55,83 @@ internal class MeasureProvider
         };
     }
 
-    public async Task<object?> GetMeasuresDayRangeAsync(DateTime startDay, DateTime stopDay)
+    public async Task<EnergyReport> GetMeasuresDateTimeRange(DateTime from, DateTime to)
     {
         try
         {
-            var container = (await _cosmosProvider.GetContainerAsync());
 
-            var queryStart = "SELECT * FROM RawMeasures c WHERE " +
-                             //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
-                             //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
-                             $"c.Sampling>= \"{startDay.ToString("s")}\" AND " +
-                             $"c.Sampling < \"{startDay.AddMinutes(3).ToString("s")}\" ORDER BY c.Sampling DESC";
+            var (fromRecord, toRecord) = await GetRangeBoundaries(from, to);
 
-
-            var queryStop = "SELECT * FROM RawMeasures c WHERE " +
-                            //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
-                            //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
-                            $"c.Sampling < \"{stopDay.ToString("s")}\" AND " +
-                            $"c.Sampling > \"{stopDay.AddMinutes(-3).ToString("s")}\" ORDER BY c.Sampling DESC";
-
-
-            using FeedIterator<RawMeasures> startFeed = container.GetItemQueryIterator<RawMeasures>(queryStart);
-            using FeedIterator<RawMeasures> stopFeed = container.GetItemQueryIterator<RawMeasures>(queryStop);
-            if (!startFeed.HasMoreResults || !stopFeed.HasMoreResults)
+            if (fromRecord == null || toRecord == null)
                 return null;
 
-
-            var oldestRecord = (await startFeed.ReadNextAsync()).FirstOrDefault();
-            var newestRecord = (await stopFeed.ReadNextAsync()).LastOrDefault();
-
-            if (oldestRecord != null && newestRecord != null)
+            return new EnergyReport
             {
-                var deltaTime = newestRecord.Sampling - oldestRecord.Sampling;
-                var deltaInHigh = newestRecord.ConsumedHighTarif - oldestRecord.ConsumedHighTarif;
-                var deltaInLow = newestRecord.ConsumedLowTarif - oldestRecord.ConsumedLowTarif;
-                var deltaOut = newestRecord.InjectedEnergyTotal - oldestRecord.InjectedEnergyTotal;
-
-                return new
-                {
-                    From = oldestRecord.Sampling,
-                    To = newestRecord.Sampling,
-                    Duration = deltaTime,
-                    InHigh = deltaInHigh,
-                    InLow = deltaInLow,
-                    Out = deltaOut,
-                };
-            }
-
-            return null;
+                From = fromRecord.Sampling,
+                To = toRecord.Sampling,
+                InHigh = toRecord.ConsumedHighTarif - fromRecord.ConsumedHighTarif,
+                InLow = toRecord.ConsumedLowTarif - fromRecord.ConsumedLowTarif,
+                Out = toRecord.InjectedEnergyTotal - fromRecord.InjectedEnergyTotal,
+            };
         }
         catch (CosmosException e)
         {
-            return e;
+            _logger.LogError(e, "CosmosException");
         }
         catch (NotSupportedException e)
         {
-            return e;
+            _logger.LogError(e, "NotSupportedException");
         }
+
+        return null;
+    }
+    
+    internal async Task<RawMeasures[]> GetRange(DateTime from, DateTime to)
+    {
+        var container = (await _cosmosProvider.GetContainerAsync());
+
+        var query = "SELECT * FROM RawMeasures c WHERE " +
+                    //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
+                    //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
+                    $"c.Sampling>= \"{from.ToString("s")}\" AND " +
+                    $"c.Sampling < \"{to.ToString("s")}\" ORDER BY c.Sampling DESC";
+
+        using FeedIterator<RawMeasures> feed = container.GetItemQueryIterator<RawMeasures>(query);
+        if (!feed.HasMoreResults)
+            return null;
+        
+        return (await feed.ReadNextAsync()).ToArray();
+    }
+
+    private async Task<Tuple<RawMeasures, RawMeasures>> GetRangeBoundaries(DateTime from, DateTime to)
+    {
+        var container = (await _cosmosProvider.GetContainerAsync());
+
+        var queryStart = "SELECT * FROM RawMeasures c WHERE " +
+                         //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
+                         //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
+                         $"c.Sampling>= \"{from.ToString("s")}\" AND " +
+                         $"c.Sampling < \"{from.AddMinutes(3).ToString("s")}\" ORDER BY c.Sampling DESC";
+
+
+        var queryStop = "SELECT * FROM RawMeasures c WHERE " +
+                        //"c.Sampling>= \"2022-09-01T00:00:00.000000\" AND " +
+                        //"c.Sampling < \"2022-09-02T00:00:00.000000\" ORDER BY c.Sampling DESC";
+                        $"c.Sampling < \"{to.ToString("s")}\" AND " +
+                        $"c.Sampling > \"{to.AddMinutes(-3).ToString("s")}\" ORDER BY c.Sampling DESC";
+
+
+        using FeedIterator<RawMeasures> startFeed = container.GetItemQueryIterator<RawMeasures>(queryStart);
+        using FeedIterator<RawMeasures> stopFeed = container.GetItemQueryIterator<RawMeasures>(queryStop);
+        if (!startFeed.HasMoreResults || !stopFeed.HasMoreResults)
+            return null;
+        
+        return new Tuple<RawMeasures, RawMeasures>((await startFeed.ReadNextAsync()).FirstOrDefault(),
+            (await stopFeed.ReadNextAsync()).FirstOrDefault());
+    }
+
+    public async Task<EnergyReport?> GetMeasuresDayRangeAsync(DateTime startDay, DateTime stopDay)
+    {
+        return await GetMeasuresDateTimeRange(startDay, stopDay);
     }
 }

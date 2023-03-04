@@ -1,12 +1,19 @@
-<div class="z-depth-4" style="width:720px">
+
+
+<div class="z-depth-4" style="width:720px;height:450px;">
 
 <h4>Derniers 10 jours</h4>
-<div id="graph" style="width: 700px;height:450px;"></div>
+<div id="10days_graph" style="width: 700px;height:450px;"></div>
 
 </div>
-
+<div>
+<!-- Integrate daily-consumption component -->
+<app-daily-consumption></app-daily-consumption>
+</div>
+<div>
 <!-- Integrate solar-gauge component -->
 <app-solar-gauge></app-solar-gauge>
+</div>
 
 <h3>Last 30min</h3>
 <div><input type="button" title="Refresh" value="Refresh" readonly="readonly"></div>

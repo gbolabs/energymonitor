@@ -14,14 +14,17 @@ declare var echarts: any;
 })
 export class SolarGaugeComponent {
   get countDown(): Date {
-    return new Date(0, 0, 0, this._countDown.hours, this._countDown.minutes, this._countDown.seconds);
+    return new Date(0, 0, 0, 0, this._countDown.minutes, this._countDown.seconds);
   }
   get lastSampling(): Date {
     return this._lastSampling;
   }
   private _lastSampling!: Date;
-  private _countDown!: any;
-  private _lastRefresh!: Date;
+  private _countDown: any = {
+    minutes: 0,
+    seconds: 0
+  };
+  private _lastRefresh: Date = new Date();
 
   constructor(private measureService: MeasuresService) {
 
@@ -50,7 +53,6 @@ export class SolarGaugeComponent {
     }
     else {
       this._countDown = {
-        hours: Math.floor((240 - delta) / 3600),
         minutes: Math.floor((240 - delta) % 3600 / 60),
         seconds: Math.floor((240 - delta) % 3600 % 60)
       };
@@ -69,7 +71,7 @@ export class SolarGaugeComponent {
   }
 
   initGraphs() {
-    let gaugeChart = echarts.init(document.getElementById('solar-gauge'));
+    let gaugeChart = echarts.init(document.getElementById('currentSolarPowerGauge'));
     gaugeChart.setOption(this._gaugeOptions);
   }
 }

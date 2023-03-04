@@ -6,11 +6,13 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { CommonModule, DatePipe } from '@angular/common';
 import { SolarGaugeComponent } from './solar-gauge/solar-gauge.component';
+import { DailyConsumptionComponent } from './daily-consumption/daily-consumption.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    SolarGaugeComponent
+    SolarGaugeComponent,
+    DailyConsumptionComponent
   ],
   imports: [
     BrowserModule,

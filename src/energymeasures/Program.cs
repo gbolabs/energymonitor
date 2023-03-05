@@ -150,7 +150,7 @@ app.MapGet("/api/v1/measures/range/{date}/{from}/{to}",
         var toDate = date.ToDateTime(to);
         var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
         return data == null ? Results.NoContent() : Results.Ok(data);
-    });
+    }).RequireCors(MyAllowSpecificOrigins);
 
 app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/details",
     async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to) =>
@@ -159,7 +159,7 @@ app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/details",
         var toDate = date.ToDateTime(to);
         var measures = await provider.GetRange(fromDate, toDate);
         return measures?.Length > 0 ? Results.Ok(measures) : Results.NoContent();
-    }).Produces<RawMeasures[]>();
+    }).RequireCors(MyAllowSpecificOrigins).Produces<RawMeasures[]>();
 
 app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/grouped/{interval}",
     async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to, TimeSpan interval) =>
@@ -185,7 +185,7 @@ app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/grouped/{interval}",
             }).ToArray();
         
         return grouped?.Length > 0 ? Results.Ok(grouped.OrderBy(r=>r.From)) : Results.NoContent();
-    }).Produces<EnergyReport[]>();
+    }).RequireCors(MyAllowSpecificOrigins).Produces<EnergyReport[]>();
 
 app.MapGet("/api/v3/production/solar/last", (
         ILogger<LastProductionResponse> logger,
@@ -199,7 +199,7 @@ app.MapGet("/api/v3/production/solar/last", (
                 CurrentPowerW = r.CurrentPower,
                 ProductionTotalKwh = r.ProductionKwhSinceLastSampling,
             }).FirstOrDefault();
-    })
+    }).RequireCors(MyAllowSpecificOrigins)
     .Produces<LastProductionResponse>();
 
 app.MapGet("/api/v3/production/solar/range/{from}/{to}", (
@@ -219,7 +219,7 @@ app.MapGet("/api/v3/production/solar/range/{from}/{to}", (
             }).ToArray();
 
         return data;
-    })
+    }).RequireCors(MyAllowSpecificOrigins)
     .Produces<LastProductionResponse[]>();
 
 app.MapGet("/api/v3/production/solar/day/{offset}", (
@@ -240,7 +240,7 @@ app.MapGet("/api/v3/production/solar/day/{offset}", (
             Duration = duration,
             LastSampling = data.LastSampling
         });
-    })
+    }).RequireCors(MyAllowSpecificOrigins)
     .Produces<DailyProductionReport>();
 
 app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
@@ -327,6 +327,7 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
             report
         });
     }) //.RequireAuthorization("MyStromUploadPolicy")
+    .RequireCors(MyAllowSpecificOrigins)
     .Accepts<MyStromReport>(contentType: "application/json")
     .Produces<DailyProductionReport>();
 
@@ -492,7 +493,6 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request,
                 SortedList = orderedList
             }
         });
-        ;
     }
 }).Accepts<IFormFile>("text/csv");
 //.Produces(200);

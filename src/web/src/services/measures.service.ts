@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Measure} from '../model/Measure';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {DatePipe} from '@angular/common';
+import {DatePipe, Time} from '@angular/common';
 import {DailyProduction} from "src/model/dailyProduction";
 import {Production} from "src/model/production";
 
@@ -11,8 +11,8 @@ import {Production} from "src/model/production";
 })
 export class MeasuresService {
 
-  // private hostname = 'http://localhost:49154/';  // URL to web api
-  private hostname = 'https://app-pr114-energyapi-01.azurewebsites.net/';  // URL to web api
+  private hostname = 'http://localhost:5000/';  // URL to web api
+  // private hostname = 'https://app-pr114-energyapi-01.azurewebsites.net/';  // URL to web api
   private api = 'api/v1/measures/';
   private apiProduction = 'api/v3/production/';
 
@@ -63,5 +63,12 @@ export class MeasuresService {
 
   getSolarProduction(offset: number): Observable<DailyProduction> {
     return this.http.get<DailyProduction>(this.hostname + this.apiProduction + "solar/day/" + offset);
+  }
+
+  getEnergyReportForRange(date: Date, fromTime: Date, toTime: Date): Observable<Measure[]> {
+    var dateString = this._datePipe.transform(date, "yyyy-MM-dd");
+    var fromString = this._datePipe.transform(fromTime, "HH:mm");
+    var toString = this._datePipe.transform(toTime, "HH:mm");
+    return this.http.get<Measure[]>(this.hostname + this.api + "range/" + dateString + "/" + fromString + "/" + toString + "/grouped/00:10:00");
   }
 }

@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
-import { MeasuresService } from "../../services/measures.service";
-import { GraphsService } from "../../services/graphs.service";
+import {Component} from '@angular/core';
+import {MeasuresService} from "../../services/measures.service";
+import {GraphsService} from "../../services/graphs.service";
 
 declare var echarts: any;
 
@@ -20,7 +20,7 @@ export class DailyConsumptionComponent {
       focus: 'series'
     },
     // 24 random values between 0 and 20
-    data:[0],
+    data: [0],
     areaStyle: {}
   };
   private _solarLine: any = {
@@ -30,7 +30,7 @@ export class DailyConsumptionComponent {
     emphasis: {
       focus: 'series'
     },
-    data:[0],
+    data: [0],
     areaStyle: {}
   };
   private _injectionLine: any = {
@@ -39,7 +39,7 @@ export class DailyConsumptionComponent {
     emphasis: {
       focus: 'series'
     },
-    data:[0],
+    data: [0],
     areaStyle: {
       color: '#FF0000'
     }
@@ -50,10 +50,24 @@ export class DailyConsumptionComponent {
 
   ngOnInit(): void {
     this.refreshSeries();
-    this.initGraphs();
   }
-  private refreshSeries() {
 
+  private refreshSeries() {
+    var today = new Date();
+    // 00:00
+    var start = new Date(Date.now());
+    start.setHours(0, 0, 0, 0);
+    // 23:59
+    var end = new Date(Date.now());
+    end.setHours(23, 59, 0, 0);
+
+    this.measuresService.getEnergyReportForRange(today, start, end)
+      .subscribe((data) => {
+        this._gridLine.data = data.map((x) => x.inHigh + x.inLow);
+        this._injectionLine.data = data.map((x) => x.out * -1);
+        this._gaugeOptions = this.buildOptions();
+        echarts.init(document.getElementById('consumptionDailyGraph')).setOption(this._gaugeOptions);
+      });
   }
 
 
@@ -84,14 +98,5 @@ export class DailyConsumptionComponent {
         this._injectionLine
       ]
     }
-  }
-
-  private initGraphs() {
-    var dom = document.getElementById('consumptionDailyGraph')
-    let dailyConsumptionGraph = echarts.init(dom);
-    this._gaugeOptions = this.buildOptions();
-    dailyConsumptionGraph.showLoading();
-    dailyConsumptionGraph.setOption(this._gaugeOptions);
-    dailyConsumptionGraph.hideLoading();
   }
 }

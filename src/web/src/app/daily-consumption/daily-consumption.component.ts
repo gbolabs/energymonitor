@@ -14,28 +14,42 @@ export class DailyConsumptionComponent {
   private _gaugeOptions: any;
   private _gridLine: any = {
     name: 'Grid',
-    type: 'line',
+    type: 'bar',
     stack: 'Total',
+    label: {
+      show: true,
+      position: 'top',
+      color: 'blue'
+    },
     emphasis: {
       focus: 'series'
     },
     // 24 random values between 0 and 20
     data: [0],
-    areaStyle: {}
+    areaStyle: {
+      color: 'blue'
+    }
   };
   private _solarLine: any = {
     name: 'Solar',
-    type: 'line',
+    type: 'bar',
     stack: 'Total',
+    label: {
+      show: true,
+      position: 'top',
+      color: 'orange'
+    },
     emphasis: {
       focus: 'series'
     },
     data: [0],
-    areaStyle: {}
+    areaStyle: {
+      color: 'orange'
+    }
   };
   private _injectionLine: any = {
     name: 'Injection',
-    type: 'line',
+    type: 'bar',
     emphasis: {
       focus: 'series'
     },
@@ -63,9 +77,11 @@ export class DailyConsumptionComponent {
 
     this.measuresService.getEnergyReportForRange(today, start, end)
       .subscribe((data) => {
-        this._gridLine.data = data.map((x) => x.inHigh + x.inLow);
-        this._injectionLine.data = data.map((x) => x.out * -1);
+        this._gridLine.data = data.map((x) => x.averagePowerIn);
+        this._injectionLine.data = data.map((x) => x.averagePowerOut * -1);
+        this._solarLine.data = data.map((x) => 0);
         this._gaugeOptions = this.buildOptions();
+        console.log(this._gaugeOptions);
         echarts.init(document.getElementById('consumptionDailyGraph')).setOption(this._gaugeOptions);
       });
   }
@@ -81,16 +97,24 @@ export class DailyConsumptionComponent {
     }
 
     return {
+      yAxis: [
+        {
+          name: 'Energy',
+          type: 'value',
+          position: 'left',
+          offset: 5,
+          axisLine: {
+            show: true
+          },
+          axisLabel: {
+            formatter: '{value} Wh'
+          }
+        }
+      ],
       xAxis: [{
         type: 'category',
         data: getDayHours(),
         boundaryGap: false
-      }],
-      yAxis: [{
-        type: 'value',
-        axisLabel: {
-          formatter: '{value} kWh'
-        }
       }],
       series: [
         this._gridLine,

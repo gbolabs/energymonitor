@@ -188,6 +188,9 @@ app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/grouped/{interval}",
                     InHigh = newest.ConsumedHighTarif - oldest.ConsumedHighTarif,
                     InLow = newest.ConsumedLowTarif - oldest.ConsumedLowTarif,
                     Out = newest.InjectedEnergyTotal - oldest.InjectedEnergyTotal,
+                    AverageCurrentL1 = g.Average(r=>r.LiveCurrentL1),
+                    AverageCurrentL2 = g.Average(r=>r.LiveCurrentL2),
+                    AverageCurrentL3 = g.Average(r=>r.LiveCurrentL3),
                 };
             }).ToArray();
 

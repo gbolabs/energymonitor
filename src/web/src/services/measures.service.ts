@@ -34,16 +34,16 @@ export class MeasuresService {
     var yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     var yesterdayString = this._datePipe.transform(yesterday, "yyyy-MM-dd");
-    return this.http.get<Measure>(this.hostname + this.api + "/date/" + yesterdayString);
+    return this.http.get<Measure>(this.hostname + this.api + "date/" + yesterdayString);
   }
 
   getMeasureOfDay(day: Date): Observable<Measure> {
     var dayString = this._datePipe.transform(day, "yyyy-MM-dd");
-    return this.http.get<Measure>(this.hostname + this.api + "/date/" + dayString);
+    return this.http.get<Measure>(this.hostname + this.api + "date/" + dayString);
   }
 
   getLastWeek(): Observable<Measure> {
-    return this.http.get<Measure>(this.hostname + this.api + "/days/last/7");
+    return this.http.get<Measure>(this.hostname + this.api + "days/last/7");
   }
 
   getTodayProduction(): Observable<DailyProduction> {
@@ -69,6 +69,6 @@ export class MeasuresService {
     var dateString = this._datePipe.transform(date, "yyyy-MM-dd");
     var fromString = this._datePipe.transform(fromTime, "HH:mm");
     var toString = this._datePipe.transform(toTime, "HH:mm");
-    return this.http.get<Measure[]>(this.hostname + this.api + "range/" + dateString + "/" + fromString + "/" + toString + "/grouped/00:10:00");
+    return this.http.get<Measure[]>(this.hostname + this.api + "range/" + dateString + "/" + fromString + "/" + toString + "/grouped/00:20:00");
   }
 }

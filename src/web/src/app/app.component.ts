@@ -173,6 +173,7 @@ export class AppComponent {
         solarSeries.data = x.map(s => s.solar)
         options.xAxis.data = x.map(s => s.date.toLocaleDateString());
 
+        console.log(options);
         myChart.setOption(options);
       });
   }

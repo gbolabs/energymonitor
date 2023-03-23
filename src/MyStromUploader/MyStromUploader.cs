@@ -18,26 +18,48 @@ internal class MyStromUploader : IJob
         _logger = logger;
     }
 
+    private async Task<List<MyStromReport>> GetMyStromReports(HttpClient httpClient)
+    {
+        // Get the report from the MyStrom switch over the REST API
+        var reports = new List<MyStromReport>();
+        foreach (var stromSwitch in _settings.MyStromSwitches)
+        {
+            var request = $"http://{stromSwitch.IpAddress}/report";
+            var response = await httpClient.GetAsync(request);
+            _logger.LogInformation($"Response: {await response.Content.ReadAsStringAsync()}");
+            _logger.LogInformation($"Status code: {response.StatusCode}");
+
+            var r = await response.Content.ReadFromJsonAsync<MyStromReport>();
+            if (r != null)
+                reports.Add(r);
+        }
+
+        return reports;
+    }
+
     /// <summary>
     /// Method invoked by the timer
     /// </summary>
     private async Task Upload()
     {
-        // Get the report from the MyStrom switch over the REST API
-        using var httpClient = new HttpClient();
-        var request = $"http://{_settings.MyStromSwitches[0].IpAddress}/report";
-        var response = await httpClient.GetAsync(request);
-        _logger.LogInformation($"Response: {await response.Content.ReadAsStringAsync()}");
-        _logger.LogInformation($"Status code: {response.StatusCode}");
+        var httpClient = new HttpClient();
+        var reports = await GetMyStromReports(httpClient);
 
-        var report = await response.Content.ReadFromJsonAsync<MyStromReport>();
-
-        if (report.Power <= 0)
+        if (!reports.Any(r => r.Power > 0))
         {
             // No power consumption, no need to upload
             _logger.LogInformation("No power production, no need to upload");
             return;
         }
+
+        var power = reports.Sum(r => r.Power);
+        var ws = reports.Sum(r => r.Ws);
+
+        var report = new MyStromReport
+        {
+            Power = power,
+            Ws = ws
+        };
         
         _logger.LogInformation($"Power: {report.Power}");
         _logger.LogInformation($"Ws: {report.Ws}");
@@ -70,4 +92,3 @@ internal class MyStromReport
     public decimal Power { get; set; }
     public decimal Ws { get; set; }
 }
-

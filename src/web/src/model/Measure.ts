@@ -2,7 +2,9 @@ export interface Measure{
     duration: string,
     inHigh: number,
     inLow: number,
-    out: number
+    out: number,
+    averagePowerIn: number,
+    averagePowerOut: number,
 }
 
 export class DailyMeasure

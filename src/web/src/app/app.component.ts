@@ -63,7 +63,7 @@ export class AppComponent {
 
   private initGraphs() {
     // var myChart = echarts.init(document.getElementById('graph') as HTMLDivElement);
-    let myChart = echarts.init(document.getElementById('graph'));
+    let myChart = echarts.init(document.getElementById('10days_graph'));
 
     this.graphServices.getWeekEnergyConsumptionSeries().pipe(map(series => series.in))
       .subscribe(inArray => {
@@ -166,20 +166,16 @@ export class AppComponent {
       .pipe(map(series => series.sort((a, b) => a.date.getTime() - b.date.getTime())))
       // .pipe(map(series => series.map(s =>s.in)))
       .subscribe(x => {
-        console.log(x);
         inSeries.data = x.map(s => {
-          console.log(s.in);
           return s.in;
         })
         outSeries.data = x.map(s => s.out * -1)
         solarSeries.data = x.map(s => s.solar)
         options.xAxis.data = x.map(s => s.date.toLocaleDateString());
 
+        console.log(options);
         myChart.setOption(options);
       });
-
-    console.log('option');
-    console.log(myChart.getOption());
   }
 }
 

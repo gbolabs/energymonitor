@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using energymeasures;
 using energymeasures.Config;
+using energymeasures.Db.CosmosDb;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,25 +53,34 @@ builder.Services.AddLogging(b =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
+    options.AddPolicy("Production", policyBuilder =>
+    {
+        policyBuilder.WithOrigins("https://energy.isago.ch", // custom domain
+            "https://salmon-coast-0abc20703.2.azurestaticapps.net/", // direct link
+            "https://salmon-coast-0abc20703-preview.westeurope.2.azurestaticapps.net/"); // preview
+        policyBuilder.AllowAnyHeader();
+        policyBuilder.WithMethods("GET", "POST");
+    });
+    options.AddPolicy(name: "Development",
         builder =>
         {
-            builder.WithOrigins("https://stopr114emp001.z1.web.core.windows.net",
-                "https://energy.isago.ch",
-                "http://localhost:4200",
-                "http://localhost");
+            builder.WithMethods("GET", "POST");
+            builder.WithOrigins("http://localhost:4200");
+            builder.WithOrigins("http://localhost:5000"); // For redirects
+            builder.AllowAnyHeader();
         });
+    options.DefaultPolicyName = builder.Environment.IsDevelopment() ? "Development" : "Production";
 });
 
 var app = builder.Build();
-app.UseOpenApi();
-app.UseSwaggerUi3(builder => { builder.Path = "/api/v1"; });
 app.UseCors();
+app.UseOpenApi();
+app.UseSwaggerUi3(builder => { builder.Path = "/api"; });
 
 
 // Configure the HTTP request pipeline.
 
-app.MapGet("/", () => "Hello CORS!");
+app.MapGet("/", () => "Hello!");
 
 app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
     {
@@ -111,8 +120,7 @@ app.MapGet("/api/v1/measures/today", (CosmosDbContext dbContext) =>
             InLow = deltaInLow,
             Out = deltaOut,
         });
-    }).RequireCors(MyAllowSpecificOrigins)
-    .Produces(200, contentType: "application/json");
+    }).Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, DateOnly date) =>
 {
@@ -124,7 +132,7 @@ app.MapGet("/api/v1/measures/date/{date}", async (MeasureProvider provider, Date
     var toDate = date.AddDays(1).ToDateTime(TimeOnly.MinValue);
     var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
     return data == null ? Results.NoContent() : Results.Ok(data);
-}).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
+}).Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider, int days) =>
 {
@@ -133,14 +141,61 @@ app.MapGet("/api/v1/measures/days/last/{days}", async (MeasureProvider provider,
     var stopDay = now;
     var data = await provider.GetMeasuresDayRangeAsync(startDay, stopDay);
     return data == null ? Results.NoContent() : Results.Ok(data);
-}).RequireCors(MyAllowSpecificOrigins).Produces(200, contentType: "application/json");
+}).Produces(200, contentType: "application/json");
 
 app.MapGet("/api/v1/measures/last", (MeasureProvider provider, int? minutes) =>
 {
     //var data = dbContext.GetMeasures(minutes ?? 30);
     var data = provider.GetMeasures(minutes ?? 30);
     return data == null ? Results.NoContent() : Results.Ok(data);
-}).RequireCors(MyAllowSpecificOrigins);
+});
+
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var data = await provider.GetMeasuresDayRangeAsync(fromDate, toDate);
+        return data == null ? Results.NoContent() : Results.Ok(data);
+    });
+
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/details",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var measures = await provider.GetRange(fromDate, toDate);
+        return measures?.Length > 0 ? Results.Ok(measures) : Results.NoContent();
+    }).Produces<RawMeasures[]>();
+
+app.MapGet("/api/v1/measures/range/{date}/{from}/{to}/grouped/{interval}",
+    async (MeasureProvider provider, DateOnly date, TimeOnly from, TimeOnly to, TimeSpan interval) =>
+    {
+        var fromDate = date.ToDateTime(from);
+        var toDate = date.ToDateTime(to);
+        var measures = await provider.GetRange(fromDate, toDate);
+
+        // group by interval
+        var grouped = measures.GroupBy(m => m.Sampling.RoundDown(interval))
+            .Select(g =>
+            {
+                var oldest = g.Last();
+                var newest = g.First();
+                return new EnergyReport
+                {
+                    From = oldest.Sampling,
+                    To = newest.Sampling,
+                    InHigh = newest.ConsumedHighTarif - oldest.ConsumedHighTarif,
+                    InLow = newest.ConsumedLowTarif - oldest.ConsumedLowTarif,
+                    Out = newest.InjectedEnergyTotal - oldest.InjectedEnergyTotal,
+                    AverageCurrentL1 = g.Average(r=>r.LiveCurrentL1),
+                    AverageCurrentL2 = g.Average(r=>r.LiveCurrentL2),
+                    AverageCurrentL3 = g.Average(r=>r.LiveCurrentL3),
+                };
+            }).ToArray();
+
+        return grouped?.Length > 0 ? Results.Ok(grouped.OrderBy(r => r.From)) : Results.NoContent();
+    }).Produces<EnergyReport[]>();
 
 app.MapGet("/api/v3/production/solar/last", (
         ILogger<LastProductionResponse> logger,
@@ -154,9 +209,26 @@ app.MapGet("/api/v3/production/solar/last", (
                 CurrentPowerW = r.CurrentPower,
                 ProductionTotalKwh = r.ProductionKwhSinceLastSampling,
             }).FirstOrDefault();
-    })
-    .Produces<LastProductionResponse>();
+    }).Produces<LastProductionResponse>();
 
+app.MapGet("/api/v3/production/solar/range/{from}/{to}", (
+        ILogger<LastProductionResponse> logger,
+        SolarProductionCosmosDbContext solarProductionCosmosDbContext,
+        DateTime from, DateTime to) =>
+    {
+        var data = solarProductionCosmosDbContext.LastProductions
+            .Where(p => p.Sampling >= from && p.Sampling <= to)
+            .OrderBy(p => p.Sampling)
+            .Select(r => new LastProductionResponse()
+            {
+                Duration = r.Duration,
+                Sampling = r.Sampling,
+                CurrentPowerW = r.CurrentPower,
+                ProductionTotalKwh = r.ProductionKwhSinceLastSampling,
+            }).ToArray();
+
+        return data;
+    }).Produces<LastProductionResponse[]>();
 
 app.MapGet("/api/v3/production/solar/day/{offset}", (
         ILogger<DailyProductionReport> logger,
@@ -172,12 +244,11 @@ app.MapGet("/api/v3/production/solar/day/{offset}", (
         return Results.Ok(new DailyProductionReport
         {
             Date = day.ToDateTime(TimeOnly.MinValue),
-            ProductionKwh = Math.Round(data.AverageProduction * (decimal)duration.TotalSeconds / 3600000,2),
+            ProductionKwh = Math.Round(data.AverageProduction * (decimal)duration.TotalSeconds / 3600000, 2),
             Duration = duration,
             LastSampling = data.LastSampling
         });
-    })
-    .Produces<DailyProductionReport>();
+    }).Produces<DailyProductionReport>();
 
 app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         ILogger<MyStromReport> logger,
@@ -262,7 +333,7 @@ app.MapPost("/api/v3/production/solar/mystrom/", (MyStromReport report,
         {
             report
         });
-    }) //.RequireAuthorization("MyStromUploadPolicy")
+    })
     .Accepts<MyStromReport>(contentType: "application/json")
     .Produces<DailyProductionReport>();
 
@@ -282,7 +353,7 @@ app.MapGet("/api/v1/measures/summary/days/{day}", async (MeasureProvider provide
             .ToArray();
 
         return measures == null ? Results.NoContent() : Results.Ok(measures);
-    }).RequireCors(MyAllowSpecificOrigins)
+    })
     .Produces(200, contentType: "application/json");
 
 app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request,
@@ -428,7 +499,6 @@ app.MapPost("/api/v1/measures/mystrom/upload", async (HttpRequest request,
                 SortedList = orderedList
             }
         });
-        ;
     }
 }).Accepts<IFormFile>("text/csv");
 //.Produces(200);

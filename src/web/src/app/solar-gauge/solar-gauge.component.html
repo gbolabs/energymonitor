@@ -1,0 +1,8 @@
+<div class="z-depth-4" style="width:400px;height:max-content">
+  <h4>Production Solaire</h4>
+  <!-- display the time of last reading -->
+  <p>{{lastSampling | date:'HH:mm:ss'}}<br/>
+  Prochain dans : {{countDown | date: 'mm:ss' }}</p>
+  <!-- display the current production -->
+  <div id="currentSolarPowerGauge" style="width:400px;height:400px"></div>
+</div>

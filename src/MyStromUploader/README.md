@@ -1,10 +1,15 @@
 # Build
 In `src/MyStromUploader` directory
 
+On MacOs, instruct docker to build in a linux-amd64 format.
+- `export DOCKER_DEFAULT_PLATFORM=linux/amd64`
+or
+- 'docker build .  --platform linux/amd64 -t crisagocmn.azurecr.io/pr114/mystromuploader:1.1-beta'
+
 - `docker build . -t crisagocmn.azurecr.io/pr114/mystromuploader:1.1-beta`
 - `az login -t {tenant}`
 - `az acr login -n crisagocmn`
-- `docker push -t crisagocmn.azurecr.io/pr114/mystromuploader:1.1-beta`
+- `docker push crisagocmn.azurecr.io/pr114/mystromuploader:1.1-beta`
 
 # Operate
 On a docker-enabled system (linux-based)

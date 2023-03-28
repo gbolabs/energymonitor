@@ -25,13 +25,21 @@ internal class MyStromUploader : IJob
         foreach (var stromSwitch in _settings.MyStromSwitches)
         {
             var request = $"http://{stromSwitch.IpAddress}/report";
-            var response = await httpClient.GetAsync(request);
-            _logger.LogInformation($"Response: {await response.Content.ReadAsStringAsync()}");
-            _logger.LogInformation($"Status code: {response.StatusCode}");
 
-            var r = await response.Content.ReadFromJsonAsync<MyStromReport>();
-            if (r != null)
-                reports.Add(r);
+            try
+            {
+                var response = await httpClient.GetAsync(request);
+                _logger.LogInformation($"Response: {await response.Content.ReadAsStringAsync()}");
+                _logger.LogInformation($"Status code: {response.StatusCode}");
+
+                var r = await response.Content.ReadFromJsonAsync<MyStromReport>();
+                if (r != null)
+                    reports.Add(r);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Unable to get report from MyStrom switch: " + e.Message);
+            }
         }
 
         return reports;

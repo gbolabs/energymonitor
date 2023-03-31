@@ -1,84 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using energymeasures;
+using energymeasures.Api;
 using energymeasures.Config;
 using energymeasures.Db.CosmosDb;
+using energymeasures.Security;
+using energymeasures.Services;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-const string MyAllowSpecificOrigins = "development";
-
-builder.Services.AddCosmos<CosmosDbContext>(builder.Configuration["pr114energymeasures"],
-    builder.Configuration["CosmosDbName"]);
-builder.Services.AddCosmos<SolarProductionCosmosDbContext>(builder.Configuration["pr114energymeasures"],
-    "solar-production");
-
-builder.Services.Configure<MyStromProductionConfig>(builder.Configuration.GetSection(nameof(MyStromProductionConfig)));
-
-builder.Services.AddSingleton(new CosmosProvider(
-    builder.Configuration["pr114energymeasures"],
-    builder.Configuration["CosmosDbName"]));
-builder.Services.AddSingleton(new CosmosSolarProductionProvider(
-    builder.Configuration["pr114energymeasures"]));
-
-builder.Services.AddDbContext<MyDatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration["AZURE_SQL_CONNECTIONSTRING"]));
-
-builder.Services.AddTransient<MeasureProvider>();
-builder.Services.AddLogging(builder =>
-{
-    builder.AddConsole();
-    builder.AddDebug();
-});
-
-builder.Services.AddSwaggerDocument(builder =>
-{
-    builder.Title = "Energy Measures API";
-    builder.Version = "v1";
-    builder.Description = "The Energy Measures API provides access to the energy measures.";
-    builder.DocumentName = "v1";
-});
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddLogging(b =>
-{
-    if (builder.Environment.EnvironmentName == "Development")
-        b.AddConsole();
-    else
-        // Application insights using the instrumentation key
-        b.AddApplicationInsights(builder.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
-});
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("Production", policyBuilder =>
-    {
-        policyBuilder.WithOrigins("https://energy.isago.ch", // custom domain
-            "https://salmon-coast-0abc20703.2.azurestaticapps.net/", // direct link
-            "https://salmon-coast-0abc20703-preview.westeurope.2.azurestaticapps.net/"); // preview
-        policyBuilder.AllowAnyHeader();
-        policyBuilder.WithMethods("GET", "POST");
-    });
-    options.AddPolicy(name: "Development",
-        builder =>
-        {
-            builder.WithMethods("GET", "POST");
-            builder.WithOrigins("http://localhost:4200");
-            builder.WithOrigins("http://localhost:5000"); // For redirects
-            builder.AllowAnyHeader();
-        });
-    options.DefaultPolicyName = builder.Environment.IsDevelopment() ? "Development" : "Production";
-});
+builder.AddDatabases();
+builder.AddConfiguration();
+builder.AddBusinessLogic();
+builder.AddLogging();
+builder.SetupCors();
+builder.SetupApiDocumentation();
 
 var app = builder.Build();
-app.UseCors();
-app.UseOpenApi();
-app.UseSwaggerUi3(builder => { builder.Path = "/api"; });
+app.SetupApiDocumentation();
+app.SetupCors();
 
 
-// Configure the HTTP request pipeline.
+// Add the path mappings
+
 
 app.MapGet("/", () => "Hello!");
 

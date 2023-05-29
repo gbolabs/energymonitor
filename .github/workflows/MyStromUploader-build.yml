@@ -38,7 +38,7 @@ jobs:
         with:
           build-args: |
               IMAGE_VERSION=${{ env.IMAGE_VERSION }}
-          build-contexts: .
+          file: 'src/NyStromUpload/Dockerfile'
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}

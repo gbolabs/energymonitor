@@ -42,4 +42,6 @@ jobs:
           file: 'src/MyStromUpload/Dockerfile'
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }} ${{ env.IMAGE_NAME }}:1-latest
+          tags: | 
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+            ${{ env.IMAGE_NAME }}:1-latest

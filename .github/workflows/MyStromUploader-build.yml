@@ -41,4 +41,4 @@ jobs:
           file: 'src/NyStromUpload/Dockerfile'
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }} latest

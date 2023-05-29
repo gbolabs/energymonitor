@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32602.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common\common.csproj", "{C687D2C0-2155-4EA9-8B12-F27F6DA70101}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C5BC7255-F8FD-4B3A-BBAF-87A352875698}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ingress-function", "azfuncs\ingress-function\ingress-function.csproj", "{7BC984B8-9CA4-44C2-A0BD-0AE82DFBC5DE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "energymeasures", "energymeasures\energymeasures.csproj", "{E3E449C8-BF40-4864-B603-6884AF7A13CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyStromUploader", "MyStromUploader\MyStromUploader.csproj", "{14CF38EA-BAE4-414E-B841-A55E93483BC5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C687D2C0-2155-4EA9-8B12-F27F6DA70101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C687D2C0-2155-4EA9-8B12-F27F6DA70101}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C687D2C0-2155-4EA9-8B12-F27F6DA70101}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C687D2C0-2155-4EA9-8B12-F27F6DA70101}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BC984B8-9CA4-44C2-A0BD-0AE82DFBC5DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BC984B8-9CA4-44C2-A0BD-0AE82DFBC5DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BC984B8-9CA4-44C2-A0BD-0AE82DFBC5DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BC984B8-9CA4-44C2-A0BD-0AE82DFBC5DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3E449C8-BF40-4864-B603-6884AF7A13CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3E449C8-BF40-4864-B603-6884AF7A13CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3E449C8-BF40-4864-B603-6884AF7A13CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3E449C8-BF40-4864-B603-6884AF7A13CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14CF38EA-BAE4-414E-B841-A55E93483BC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14CF38EA-BAE4-414E-B841-A55E93483BC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14CF38EA-BAE4-414E-B841-A55E93483BC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14CF38EA-BAE4-414E-B841-A55E93483BC5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D4064B35-7268-4A2D-B69B-61C1F7AA6E9D}
+	EndGlobalSection
+EndGlobal

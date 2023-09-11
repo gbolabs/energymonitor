@@ -167,7 +167,7 @@ export class AppComponent {
       // .pipe(map(series => series.map(s =>s.in)))
       .subscribe(x => {
         inSeries.data = x.map(s => {
-          return s.in;
+          return Number.parseFloat(s.in.toFixed(2));
         })
         outSeries.data = x.map(s => s.out * -1)
         solarSeries.data = x.map(s => s.solar)

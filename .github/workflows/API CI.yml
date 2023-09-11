@@ -3,7 +3,7 @@ name: API CI
 on:
   push:
     branches: [ "main" ]
-    paths-include:
+    paths: 
       - 'src/energymeasures/*'
     
 

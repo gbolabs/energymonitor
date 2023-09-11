@@ -3,7 +3,7 @@ name: API CD
 on:
   push:
     branches: [ "main" ]
-    paths-include:
+    paths:
       - 'src/energymeasures/*'
   
   workflow_dispatch:

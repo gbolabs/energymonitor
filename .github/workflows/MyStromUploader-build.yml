@@ -1,4 +1,4 @@
-name: MyStronUploader CD (Docker build)
+name: MyStromUploader CD (Docker build)
 
 on:
   push:

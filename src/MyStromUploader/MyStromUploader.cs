@@ -20,6 +20,8 @@ internal class MyStromUploader : IJob
 
     private async Task<List<MyStromReport>> GetMyStromReports(HttpClient httpClient)
     {
+        ArgumentNullException.ThrowIfNull(httpClient, nameof(httpClient));
+
         // Get the report from the MyStrom switch over the REST API
         var reports = new List<MyStromReport>();
         foreach (var stromSwitch in _settings.MyStromSwitches)
@@ -29,8 +31,10 @@ internal class MyStromUploader : IJob
             try
             {
                 var response = await httpClient.GetAsync(request);
-                _logger.LogInformation($"Response: {await response.Content.ReadAsStringAsync()}");
-                _logger.LogInformation($"Status code: {response.StatusCode}");
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var statusCode = response.StatusCode;
+                _logger.LogInformation("Response: {Response}", responseContent);
+                _logger.LogInformation("Status code: {responseContent}", responseContent);
 
                 var r = await response.Content.ReadFromJsonAsync<MyStromReport>();
                 if (r != null)
@@ -38,7 +42,7 @@ internal class MyStromUploader : IJob
             }
             catch (Exception e)
             {
-                _logger.LogError("Unable to get report from MyStrom switch: " + e.Message);
+                _logger.LogError("Unable to get report from MyStrom switch: {e}", e);
             }
         }
 
@@ -68,9 +72,9 @@ internal class MyStromUploader : IJob
             Power = power,
             Ws = ws
         };
-        
-        _logger.LogInformation($"Power: {report.Power}");
-        _logger.LogInformation($"Ws: {report.Ws}");
+
+        _logger.LogInformation("Power: {power}", power);
+        _logger.LogInformation("Ws: {ws}", ws);
 
         // Add the API key to the header
         httpClient.DefaultRequestHeaders.Add("X-Api-Key", _cloudIngressConfig.ApiKey);
@@ -85,14 +89,13 @@ internal class MyStromUploader : IJob
             report.Ws
         });
         var uploadResponse = await httpClient.PostAsync(uploadRequest, content);
-        _logger.LogInformation($"Upload response: {await uploadResponse.Content.ReadAsStringAsync()}");
-        _logger.LogInformation($"Upload status code: {uploadResponse.StatusCode}");
+        var responseContent = uploadResponse.Content.ReadAsStringAsync();
+        var uploadStatusCode = uploadResponse.StatusCode;
+        _logger.LogInformation("Upload response: {uploadContent}", responseContent);
+        _logger.LogInformation("Upload status code: {uploadStatusCode}", uploadStatusCode);
     }
 
-    public async Task Execute(IJobExecutionContext context)
-    {
-        await Upload();
-    }
+    public async Task Execute(IJobExecutionContext context) => await Upload();
 }
 
 internal class MyStromReport

@@ -1,7 +1,10 @@
-public class LastProductionResponse
+namespace energymeasures
 {
-    public TimeSpan? Duration { get; set; }
-    public DateTime Sampling { get; set; }
-    public decimal CurrentPowerW { get; set; }
-    public decimal ProductionTotalKwh { get; set; }
+    public class LastProductionResponse
+    {
+        public TimeSpan? Duration { get; set; }
+        public DateTime Sampling { get; set; }
+        public decimal CurrentPowerW { get; set; }
+        public decimal ProductionTotalKwh { get; set; }
+    }
 }

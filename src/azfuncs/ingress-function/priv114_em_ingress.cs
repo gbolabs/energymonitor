@@ -14,8 +14,10 @@ namespace ingress_function
     {
         [FunctionName("priv114_em_ingress")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            [CosmosDB(databaseName: "powerMeter_Measures", collectionName: "RawMeasures", ConnectionStringSetting = "CosmosDBConnectionString")] IAsyncCollector<PowerMeasure> output,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
+            HttpRequest req,
+            [CosmosDB(databaseName: "powerMeter_Measures", "RawMeasures")]
+            IAsyncCollector<PowerMeasure> output,
             ILogger log)
         {
             if (req is null)

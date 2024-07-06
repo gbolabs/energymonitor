@@ -1,4 +1,4 @@
-using ingress_function;
+using common;
 
 namespace energymeasures;
 

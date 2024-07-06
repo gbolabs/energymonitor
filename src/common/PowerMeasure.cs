@@ -1,7 +1,6 @@
-using System;
 using Newtonsoft.Json;
 
-namespace ingress_function
+namespace common
 {
     public class PowerMeasure
     {
@@ -13,6 +12,7 @@ namespace ingress_function
         public decimal LiveCurrentL1 { get; set; }
         public decimal LiveCurrentL2 { get; set; }
         public decimal LiveCurrentL3 { get; set; }
+
     }
 
     public class CosmosDbPowerMeasure : PowerMeasure

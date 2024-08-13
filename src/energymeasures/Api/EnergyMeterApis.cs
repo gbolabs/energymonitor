@@ -6,7 +6,8 @@ namespace energymeasures.Api;
 
 public static class EnergyMeterApis
 {
-    public static void RegisterEnergyMeterApis(this WebApplication app)
+    public static void 
+    RegisterEnergyMeterApis(this WebApplication app)
     {
         app.MapPost("/api/energymeter",
             async (CosmosDbContext dbContext, PowerMeasure measure, CancellationToken cancellationToken) =>

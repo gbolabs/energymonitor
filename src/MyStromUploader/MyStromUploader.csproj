@@ -24,6 +24,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
+        <PackageReference Remove="Microsoft.Azure.WebJobs.Extensions.CosmosDb" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,6 +42,7 @@
 
     <ItemGroup>
       <PackageVersion Update="Quartz" Version="3.10.0" />
+      <PackageVersion Update="Microsoft.Azure.Cosmos" Version="3.42.0" />
     </ItemGroup>
 
 </Project>

@@ -2,11 +2,13 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>true</WarningsAsErrors>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -35,6 +37,12 @@
 
     <ItemGroup>
         <Reference Include="Microsoft.Extensions.Logging.Console" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageVersion Update="Quartz" Version="3.10.0" />
+      <PackageVersion Update="Microsoft.Azure.Cosmos" Version="3.42.0" />
+      <PackageVersion Update="Microsoft.EntityFrameworkCore" Version="8.0.8" />
     </ItemGroup>
 
 </Project>

@@ -13,22 +13,11 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools"/>
         <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights"/>
-        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
         <PackageReference Include="NSwag.AspNetCore"/>
-        <PackageReference Remove="Microsoft.Azure.WebJobs.Extensions.CosmosDb" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\common\common.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Db\Sql"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageVersion Update="Microsoft.Azure.Cosmos" Version="3.42.0" />
-      <PackageVersion Update="Microsoft.EntityFrameworkCore.Cosmos" Version="8.0.6" />
     </ItemGroup>
 
 </Project>

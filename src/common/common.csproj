@@ -1,21 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-        <LangVersion>default</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Remove="Microsoft.Azure.WebJobs.Extensions.CosmosDb" />
     </ItemGroup>
-    <ItemGroup>
-      <PackageVersion Update="Newtonsoft.Json" Version="13.0.3" />
-      <PackageVersion Update="Microsoft.EntityFrameworkCore" Version="8.0.6" />
-      <PackageVersion Update="Microsoft.Azure.Cosmos" Version="3.42.0" />
-    </ItemGroup>
-
 </Project>

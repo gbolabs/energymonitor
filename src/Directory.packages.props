@@ -1,14 +1,13 @@
 <Project>
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-
-        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.39.1"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="8.0.6"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0"/>
-        <PackageReference Include="NSwag.AspNetCore" Version="14.0.8"/>
-        <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.CosmosDb" Version="4.7.0" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.6"/>
+        <PackageVersion Include="Newtonsoft.Json" Version="13.0.3"/>
+        <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.39.1"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Cosmos" Version="8.0.6"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.6"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6"/>
+        <PackageVersion Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.22.0"/>
+        <PackageVersion Include="NSwag.AspNetCore" Version="14.0.8"/>
     </ItemGroup>
 </Project>
+

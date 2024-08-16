@@ -1,16 +1,17 @@
 using common;
 using energymeasures.Helpers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace energymeasures.Api;
 
 public static class EnergyMeterApis
 {
-    public static void 
+    public static void
     RegisterEnergyMeterApis(this WebApplication app)
     {
         app.MapPost("/api/energymeter",
-            async (CosmosDbContext dbContext, PowerMeasure measure, CancellationToken cancellationToken) =>
+            async (CosmosDbContext dbContext, [FromBody]PowerMeasure measure, CancellationToken cancellationToken) =>
             {
                 var entity = await dbContext.PowerMeasures.AddAsync(measure.ToCosmosPowerMeasure(), cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);

@@ -4,11 +4,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ENV DOTNET_EnableWriteXorExecute=0
 WORKDIR /src
+COPY energymeasures/energymeasures.csproj energymeasures/
+COPY Directory.Packages.props Directory.Packages.props
+COPY EnergyMonitor.sln .
+COPY common/common.csproj common/
+RUN dotnet restore energymeasures/energymeasures.csproj
 COPY . .
-WORKDIR "/src/energymeasures"
-RUN dotnet restore "energymeasures.csproj"
-RUN dotnet build "energymeasures.csproj" -c Release --no-restore
-RUN dotnet publish "energymeasures.csproj" -c Release -o /app/publish --no-build
+RUN dotnet publish energymeasures/energymeasures.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app

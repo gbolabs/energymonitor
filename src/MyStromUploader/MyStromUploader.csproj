@@ -7,7 +7,6 @@
         <Nullable>enable</Nullable>
         <WarningsAsErrors>true</WarningsAsErrors>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
 

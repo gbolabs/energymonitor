@@ -1,3 +1,4 @@
+using System.Globalization;
 using common;
 
 namespace energymeasures.Helpers;
@@ -8,13 +9,16 @@ public static class Mappers
         new()
         {
             Sampling = measure.Sampling,
+            ConsumedEnergyTotal = measure.ConsumedEnergyTotal,
             ConsumedHighTarif = measure.ConsumedHighTarif,
             ConsumedLowTarif = measure.ConsumedLowTarif,
-            InjectedEnergyTotal = measure.InjectedEnergyTotal ?? measure.InjectedHighTarif + measure.InjectedLowTarif,
-            InjectedHighTarif = measure.InjectedHighTarif,
-            InjectedLowTarif = measure.InjectedLowTarif,
+            InjectedEnergyTotal = measure.InjectedEnergyTotal,
+            InjectedEnergyLowTarif = measure.InjectedEnergyLowTarif,
+            InjectedEnergyHighTarif = measure.InjectedEnergyHighTarif,
             LiveCurrentL1 = measure.LiveCurrentL1,
             LiveCurrentL2 = measure.LiveCurrentL2,
-            LiveCurrentL3 = measure.LiveCurrentL3
+            LiveCurrentL3 = measure.LiveCurrentL3,
+            Id = Guid.NewGuid().ToString(),
+            samplingdate = measure.Sampling.ToString("MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture)
         };
 }

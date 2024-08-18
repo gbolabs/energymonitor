@@ -1,0 +1,13 @@
+# Ignore files and directories commonly excluded in Docker contexts
+
+# Files
+.git
+.gitignore
+.DS_Store
+.env
+Dockerfile
+
+# Directories
+node_modules
+dist
+.angular

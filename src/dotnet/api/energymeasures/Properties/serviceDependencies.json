@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "secrets1": {
+      "type": "secrets"
+    },
+    "cosmosdb1": {
+      "type": "cosmosdb",
+      "connectionId": "pr114energymeasures"
+    },
+    "mssql1": {
+      "type": "mssql",
+      "connectionId": "adbpr114em001",
+      "dynamicId": null
+    }
+  }
+}

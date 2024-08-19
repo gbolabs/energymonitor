@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "fly": "ng build --output-path=dist/fly --configuration fly"
   },
   "private": true,
   "dependencies": {

@@ -10,6 +10,8 @@ public static class CorsSetup
             {
                 policyBuilder.WithOrigins("https://energy.isago.ch", // custom domain
                     "https://salmon-coast-0abc20703.2.azurestaticapps.net/", // direct link
+                    "http://localhost:8888", // local dev (docker)
+                    "https://energymeasures-web.fly.dev", // fly.io
                     "https://salmon-coast-0abc20703-preview.westeurope.2.azurestaticapps.net/"); // preview
                 policyBuilder.AllowAnyHeader();
                 policyBuilder.WithMethods("GET", "POST");

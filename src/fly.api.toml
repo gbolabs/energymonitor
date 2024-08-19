@@ -1,0 +1,23 @@
+# fly.toml app configuration file generated for energymeasures on 2024-08-16T23:11:19+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'energymeasures-api'
+primary_region = 'cdg'
+
+[build]
+  dockerfile = "energymeasures/Dockerfile"
+
+[http_service]
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  internal_port = 8080
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  memory = '512m'
+  cpu_kind = 'shared'
+  cpus = 1

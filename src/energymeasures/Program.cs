@@ -1,6 +1,7 @@
 using energymeasures.Api;
 using energymeasures.Security;
 using energymeasures.Services;
+using Microsoft.AspNetCore.HttpLogging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,10 @@ builder.AddLogging();
 builder.SetupCors();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = HttpLoggingFields.All;
+});
 
 var app = builder.Build();
 app.SetupCors();
@@ -21,11 +26,10 @@ app.RegisterMeasuresApis();
 app.RegisterProductionApis();
 app.RegisterEnergyMeterApis();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseHttpLogging();
+
 
 // Execute the application
 app.Run();

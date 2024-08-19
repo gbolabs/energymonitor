@@ -5,14 +5,13 @@ import {Observable} from 'rxjs';
 import {DatePipe, Time} from '@angular/common';
 import {DailyProduction} from "src/model/dailyProduction";
 import {Production} from "src/model/production";
+import {environment} from "src/environments/environment";
 
 @Injectable({
   providedIn: 'root'
 })
 export class MeasuresService {
-
-  private hostname = 'http://localhost:5000/';  // URL to web api
-  // private hostname = 'https://app-pr114-energyapi-01.azurewebsites.net/';  // URL to web api
+  private hostname = environment.api;
   private api = 'api/v1/measures/';
   private apiProduction = 'api/v3/production/';
 

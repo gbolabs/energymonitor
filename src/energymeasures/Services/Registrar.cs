@@ -9,9 +9,10 @@ public static class Registrar
     {
         builder.Services.AddLogging(b =>
         {
+            var appInsightsKey = builder.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
             if (builder.Environment.EnvironmentName == "Development")
                 b.AddConsole();
-            else
+            else if (!string.IsNullOrEmpty(appInsightsKey))
                 // Application insights using the instrumentation key
                 b.AddApplicationInsights(builder.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
         });

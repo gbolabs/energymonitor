@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quartz;
 
+namespace MyStromUploader;
+
 internal class MyStromUploader : IJob
 {
     private readonly MyStromSettings _settings;

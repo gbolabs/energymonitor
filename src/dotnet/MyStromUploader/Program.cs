@@ -34,13 +34,32 @@ internal class Program
             services.Configure<CloudIngressConfig>(
                 hostContext.Configuration.GetSection(nameof(CloudIngressConfig)));
 
-            services.AddHostedService<QuartzConfigurator>();
-            services.AddQuartz(q => { q.UseMicrosoftDependencyInjectionJobFactory(); });
-            services.AddQuartzHostedService(opt => { opt.WaitForJobsToComplete = true; });
-
-            services.AddLogging(builder =>
+            services.AddLogging(builder => { builder.AddConsole(); });
+        })
+        .ConfigureServices((hostContext, services) =>
+        {
+            // see Quartz.Extensions.DependencyInjection documentation about how to configure different configuration aspects
+            services.AddQuartz(q =>
             {
-                builder.AddConsole();
+                // Register the job, loading the schedule from configuration
+                q.AddJob<MyStromUploader.MyStromUploader>(j => j
+                    .WithIdentity("MyStromUploader")
+                    .Build());
+
+                // Create a trigger for the job
+                q.AddTrigger(t => t
+                    .ForJob("MyStromUploader")
+                    .WithIdentity("MyStromUploaderTrigger")
+                    .StartNow()
+                    .WithCronSchedule(hostContext.Configuration["QuartzConfiguratorConfig:Cron"])
+                );
+            });
+
+            // Quartz.Extensions.Hosting hosting
+            services.AddQuartzHostedService(options =>
+            {
+                // when shutting down we want jobs to complete gracefully
+                options.WaitForJobsToComplete = true;
             });
         });
 }

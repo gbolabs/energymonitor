@@ -1,15 +1,25 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
-WORKDIR /App
+FROM --platform=amd64 mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 
-# Copy everything
-COPY . ./
+# Avoid infinte dotnet restore
+ENV DOTNET_EnableWriteXorExecute=0
+
+WORKDIR /src
+
+# Copy csproj and restore as distinct layers
+COPY MyStromUploader/*.csproj ./MyStromUploader/
+COPY Directory.Packages.props .
+
 # Restore as distinct layers
-RUN dotnet restore
+RUN dotnet restore ./MyStromUploader/
+
+# Copy everything else and build
+COPY MyStromUploader/. ./MyStromUploader/
+
 # Build and publish a release
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o /publish ./MyStromUploader/MyStromUploader.csproj
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/runtime:7.0
-WORKDIR /App
-COPY --from=build-env /App/out .
+FROM --platform=amd64 mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build-env /publish .
 ENTRYPOINT ["dotnet", "MyStromUploader.dll"]
